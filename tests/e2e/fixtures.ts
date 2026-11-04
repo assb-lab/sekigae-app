@@ -2,14 +2,14 @@ import { test as base, expect, type Download, type Page } from "@playwright/test
 
 /** 各テストを空の localStorage から開始する */
 export const test = base.extend<{ freshPage: Page }>({
-  freshPage: async ({ page }, use) => {
+  freshPage: async ({ page }, provide) => {
     await page.addInitScript(() => {
       if (!sessionStorage.getItem("__e2e_init__")) {
         localStorage.clear();
         sessionStorage.setItem("__e2e_init__", "1");
       }
     });
-    await use(page);
+    await provide(page);
   },
 });
 
