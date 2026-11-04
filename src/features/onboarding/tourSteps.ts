@@ -4,9 +4,9 @@ import type { TourStep } from "./tour";
 export const MAIN_TOUR: TourStep[] = [
   { route: "/rooms", key: "tour.welcome" },
   { route: "/rooms", target: "step-rooms", key: "tour.steps", side: "bottom" },
-  { route: "/rooms", target: "rooms-list", key: "tour.roomsList", side: "right" },
-  { route: "/rooms", target: "rooms-tools", key: "tour.roomsTools", side: "bottom" },
-  { route: "/rooms", target: "rooms-canvas", key: "tour.roomsCanvas", side: "left" },
+  { route: "/rooms", target: "room-list", key: "tour.roomsList", side: "right" },
+  { route: "/rooms", target: "room-tools", key: "tour.roomsTools", side: "bottom" },
+  { route: "/rooms", target: "room-canvas", key: "tour.roomsCanvas", side: "left" },
   { route: "/members", target: "members-table", key: "tour.members", side: "top" },
   { route: "/members", target: "members-import", key: "tour.membersImport", side: "bottom" },
   { route: "/rules", target: "rules-palette", key: "tour.rulesPalette", side: "right" },
@@ -15,7 +15,7 @@ export const MAIN_TOUR: TourStep[] = [
   { route: "/seating", target: "seating-shuffle", key: "tour.shuffle", side: "bottom" },
   { route: "/seating", target: "seating-canvas", key: "tour.seatingCanvas", side: "left" },
   { route: "/seating", target: "seating-violations", key: "tour.violations", side: "left" },
-  { route: "/export", target: "export-panel", key: "tour.export", side: "top" },
+  { route: "/export", target: "export-options", key: "tour.export", side: "top" },
   { route: "/export", key: "tour.finish" },
 ];
 

@@ -63,7 +63,7 @@ export function WelcomeDialog() {
     if (ok) {
       toast.success(t("welcome.imported"));
       finish(false);
-    } else toast.error(t("welcome.importFailed"));
+    }
   };
 
   const lang = (i18n.resolvedLanguage ?? "ja") as LanguagePref;
