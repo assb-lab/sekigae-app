@@ -7,10 +7,6 @@ export { SaveStatus as SaveStatusSlot } from "@/features/project/SaveStatus";
 /** 永続化まわりのグローバル UI（復旧ダイアログ・他タブ通知・プロジェクト管理ダイアログ等） */
 export { PersistenceHost as PersistenceSlot } from "@/features/project/PersistenceHost";
 export { UndoRedo as UndoRedoSlot } from "./UndoRedo";
-export function HelpMenuSlot() {
-  return null;
-}
+export { HelpMenu as HelpMenuSlot } from "@/features/onboarding/HelpMenu";
 /** 全画面に重ねるグローバル要素（ウェルカムダイアログ、ツアー等） */
-export function GlobalOverlaysSlot() {
-  return null;
-}
+export { OnboardingOverlays as GlobalOverlaysSlot } from "@/features/onboarding/OnboardingOverlays";
