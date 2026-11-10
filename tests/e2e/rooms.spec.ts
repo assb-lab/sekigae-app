@@ -37,6 +37,20 @@ async function addRoom(page: Page, name: string) {
   await page.getByTestId("add-room-name").fill(name);
   await page.getByTestId("add-room-submit").click();
   await expect(page.getByTestId("room-row").filter({ hasText: name })).toBeVisible();
+  await settleViewBox(page);
+}
+
+/** 部屋追加後のフィット（アニメーション）が終わって viewBox が動かなくなるまで待つ */
+async function settleViewBox(page: Page) {
+  const svg = page.getByTestId("floor-canvas");
+  let last = "";
+  let streak = 0;
+  for (let i = 0; i < 30 && streak < 3; i++) {
+    await page.waitForTimeout(120);
+    const now = (await svg.getAttribute("viewBox")) ?? "";
+    streak = now === last ? streak + 1 : 0;
+    last = now;
+  }
 }
 
 test.beforeEach(async ({ freshPage: page }) => {
