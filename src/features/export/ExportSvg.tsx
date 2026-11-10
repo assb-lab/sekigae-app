@@ -202,10 +202,14 @@ export const FloorSvg = forwardRef<SVGSVGElement, { model: ExportModel; classNam
     const pad = u * 0.5;
     const header = u * 1.2;
     const labelH = u * 0.5;
-    const legendH = model.legend.length ? u * 0.9 : 0;
     const w = Math.max(model.floor.width * u, u * 6) + pad * 2;
-    const h = header + labelH + model.floor.height * u + legendH + pad * 2;
     const legendItemW = u * 1.8;
+    const legendRowH = u * 0.4;
+    // 凡例は幅に収まる列数で折り返す。行数に応じて高さを確保する
+    const legendCols = Math.max(1, Math.floor((w - pad * 2) / legendItemW));
+    const legendRows = Math.ceil(model.legend.length / legendCols);
+    const legendH = model.legend.length ? legendRows * legendRowH + u * 0.3 : 0;
+    const h = header + labelH + model.floor.height * u + legendH + pad * 2;
     return (
       <svg
         ref={ref}
@@ -236,11 +240,11 @@ export const FloorSvg = forwardRef<SVGSVGElement, { model: ExportModel; classNam
           ))}
         </g>
         {model.legend.length > 0 && (
-          <g transform={`translate(${pad} ${h - pad - legendH * 0.6})`}>
+          <g transform={`translate(${pad} ${h - pad - legendH + u * 0.3})`}>
             {model.legend.map((l, i) => (
               <g
                 key={l.label}
-                transform={`translate(${(i % Math.max(1, Math.floor((w - pad * 2) / legendItemW))) * legendItemW} ${Math.floor(i / Math.max(1, Math.floor((w - pad * 2) / legendItemW))) * u * 0.4})`}
+                transform={`translate(${(i % legendCols) * legendItemW} ${Math.floor(i / legendCols) * legendRowH})`}
               >
                 <rect width={u * 0.3} height={u * 0.3} rx={u * 0.05} fill={l.fill} />
                 <text x={u * 0.4} y={u * 0.22} fontSize={u * 0.22} fill="#0f172a">
