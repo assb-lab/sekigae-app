@@ -354,6 +354,7 @@ export function YearUpdateWizard({
                   <li>{t("wizard.doneCarried", { count: result.carriedOver })}</li>
                 )}
                 {result.ruleAdded && <li>{t("wizard.doneRule")}</li>}
+                {result.ruleEnabled && <li>{t("wizard.doneRuleEnabled")}</li>}
               </ul>
               <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
                 <RotateCcw className="size-3.5" />
