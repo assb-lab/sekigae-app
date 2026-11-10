@@ -1,11 +1,13 @@
 # Sekigae — 研究室 席決めアプリ
 
+日本語 | [English](README.en.md)
+
 研究室（特に **複数の研究室が部屋を共有する複合研究室**）の席替えを、ブラウザだけで完結して行うアプリです。
 サーバーもログインも不要で、データはすべてお使いのブラウザ内に保存されます。
 
-> English summary: a client-only seat planner for (multi-)labs. Draw rooms, build the roster, compose rules with
-> sentence-like blocks, arrange seats with presets / seeded shuffle, fine-tune by drag & drop, and export to XLSX / PPTX.
-> Works offline as a PWA. UI in Japanese and English.
+![席配置画面: 3 部屋に複合研究室のメンバーを配置し、ルールのチェックと研究室構成を表示](docs/images/seating.png)
+
+使い方は [docs/usage.md](docs/usage.md) にまとめています（部屋の作成から出力まで、ルールの書き方の例、年度更新）。
 
 ## 主な機能
 
@@ -16,6 +18,10 @@
 | ③ ルール | 文章になるブロックを組み立てる自作エディタ。人・席の条件は「かつ / または / でない」、ルール同士は「いずれか / すべて / もし〜なら」。複合研究室向けブロックとテンプレート |
 | ④ 席配置 | プリセット（研究室ミックス・奥ほど上級生 など）、シード付きシャッフル、ドラッグで微調整、ロック、違反のライブ表示、配置案の比較                                            |
 | ⑤ 出力   | XLSX（座席表・名簿）と PPTX（部屋ごと、編集可能な図形）                                                                                                                    |
+
+| 部屋エディタ                                                               | ルールエディタ                                                             |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ![部屋エディタ: L 字の部屋、島型の机、入口、障害物](docs/images/rooms.png) | ![ルールエディタ: 文章になるブロックで書いたルール](docs/images/rules.png) |
 
 そのほか: ダーク / ライト / 自動テーマ、日本語 / English、初回オンボーディングとガイドツアー、Undo/Redo、複数プロジェクト、JSON バックアップ、PWA（オフライン）。
 
@@ -54,3 +60,7 @@ pnpm bundle:check # 初期読み込み JS の gzip サイズ予算チェック�
 
 `pnpm build` で生成される `dist/` は静的ファイルのみです。任意の静的 Web サーバー（学内サーバー等）に置くか、
 GitHub Actions の CI が保存する `dist` アーティファクトを利用してください。相対パスでビルドしているため、サブディレクトリにも配置できます。
+
+## ライセンス
+
+[MIT](LICENSE)
