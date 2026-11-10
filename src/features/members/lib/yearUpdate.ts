@@ -35,19 +35,21 @@ export interface YearUpdateResult {
   /** 引き継いで固定した社会人ドクターの人数 */
   carriedOver: number;
   ruleAdded: boolean;
+  /** 無効になっていた同じルールを有効に戻した */
+  ruleEnabled: boolean;
 }
 
 const WD_EXPR: PersonExpr = { op: "roleGroup", in: ["workingDoctor"] };
 
-/** 社 D を昨年度と同じ席に固定するルールが既にあるか */
+const isWorkingDoctorSeatRule = (r: Rule) =>
+  r.block.type === "prev.same" &&
+  r.block.scope === "seat" &&
+  r.strength === "hard" &&
+  JSON.stringify(r.block.people) === JSON.stringify(WD_EXPR);
+
+/** 社 D を昨年度と同じ席に固定するルールが既にあり、有効か（無効なルールは最適化で使われない） */
 export function hasWorkingDoctorSeatRule(rules: readonly Rule[]): boolean {
-  return rules.some(
-    (r) =>
-      r.block.type === "prev.same" &&
-      r.block.scope === "seat" &&
-      r.strength === "hard" &&
-      JSON.stringify(r.block.people) === JSON.stringify(WD_EXPR),
-  );
+  return rules.some((r) => r.enabled && isWorkingDoctorSeatRule(r));
 }
 
 export function runYearUpdate(o: YearUpdateOptions): YearUpdateResult {
@@ -58,6 +60,7 @@ export function runYearUpdate(o: YearUpdateOptions): YearUpdateResult {
     removed: o.removeMembers.length,
     carriedOver: 0,
     ruleAdded: false,
+    ruleEnabled: false,
   };
   batch(() => {
     // 1. 選んだ案を昨年度として複製
@@ -122,7 +125,12 @@ export function runYearUpdate(o: YearUpdateOptions): YearUpdateResult {
         );
         result.carriedOver = seats.length;
       }
-      if (!hasWorkingDoctorSeatRule(p.rules)) {
+      // 無効のまま残っている同じルールは有効に戻す（無効なルールは最適化で使われない）
+      const disabled = p.rules.find((r) => !r.enabled && isWorkingDoctorSeatRule(r));
+      if (!hasWorkingDoctorSeatRule(p.rules) && disabled) {
+        store().updateRule(disabled.id, { enabled: true });
+        result.ruleEnabled = true;
+      } else if (!hasWorkingDoctorSeatRule(p.rules)) {
         store().addRule(
           { type: "prev.same", people: WD_EXPR, scope: "seat" },
           { strength: "hard", origin: "template", note: o.ruleNote },

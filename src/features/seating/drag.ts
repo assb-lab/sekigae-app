@@ -42,7 +42,9 @@ function targetAt(clientX: number, clientY: number): DropTarget | null {
   if (!vp || !el?.closest("[data-seating-canvas]")) return null;
   const w = vp.clientToWorld(clientX, clientY);
   if (!w) return null;
-  const hit = nearestSeat(useProjectStore.getState().project.layout.rooms, w.x, w.y);
+  // 表示されている部屋だけ（キャンバスの描画・クリック判定と同じ）
+  const rooms = useProjectStore.getState().project.layout.rooms.filter((r) => !r.hidden);
+  const hit = nearestSeat(rooms, w.x, w.y);
   return hit ? { kind: "seat", seatId: hit.seat.id } : null;
 }
 
