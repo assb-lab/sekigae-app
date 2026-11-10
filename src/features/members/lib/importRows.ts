@@ -377,7 +377,8 @@ export function buildImportRows(
             raw: `${seatRaw} (${taken})`,
           });
         else {
-          seatsTaken.set(seat.seatId, row.line);
+          // 取り込まれない行（エラーあり）は席を確保しない。後続の正しい行を重複扱いにしないため
+          if (!row.errors.length) seatsTaken.set(seat.seatId, row.line);
           row.prev = { roomKey: seat.room.key, seatId: seat.seatId };
         }
       } else if (room) {

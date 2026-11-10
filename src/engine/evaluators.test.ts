@@ -109,6 +109,23 @@ describe("room / seat blocks", () => {
     ).toBe(0);
   });
 
+  it("room.attrCap percent caps are floored without a minimum of one", () => {
+    const one = { "A-0": "f1" };
+    // 在室 1 人なら、その人の研究室が 100% を占める → 50% 上限を超える
+    expect(
+      ev({ type: "room.attrCap", rooms: [], attr: "lab", max: 50, unit: "percent" }, one).violation,
+    ).toBe(1);
+    // 0% は同じ値の人を 1 人も許さない
+    const two = { "A-0": "f1", "A-1": "d1" };
+    expect(
+      ev({ type: "room.attrCap", rooms: [], attr: "lab", max: 0, unit: "percent" }, two).violation,
+    ).toBeGreaterThan(0);
+    expect(
+      ev({ type: "room.attrCap", rooms: [], attr: "lab", max: 100, unit: "percent" }, two)
+        .violation,
+    ).toBe(0);
+  });
+
   it("seat.only / seat.empty / seat.pin", () => {
     const seats = { op: "seats" as const, seatIds: ["A-0", "A-1"] };
     expect(ev({ type: "seat.only", seats, people: roles("faculty") }, a)).toMatchObject({

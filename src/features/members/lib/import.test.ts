@@ -13,6 +13,7 @@ import {
   guessMappingFromData,
   newLabNames,
   normalizeTable,
+  validRows,
 } from "./importRows";
 import { prevPlacementOf } from "./prevPlan";
 
@@ -121,6 +122,21 @@ describe("buildImportRows", () => {
     expect(d!.warnings.map((x) => x.code)).toEqual(["prevSeatRoomOnly"]);
     expect(e!.warnings.map((x) => x.code).sort()).toEqual(["duplicateName", "prevRoomUnknown"]);
     expect(newLabNames(rows)).toEqual([]); // the row with the new lab has an error
+  });
+
+  it("does not reserve a previous seat for a row that will not be imported", () => {
+    const rows = buildImportRows(
+      [
+        ["", "", "", "", "", "Room 1", "R-01"],
+        ["Alice", "", "", "", "", "Room 1", "R-01"],
+      ],
+      mapping,
+      ctx,
+    );
+    expect(rows[0]!.errors.map((x) => x.code)).toEqual(["nameMissing"]);
+    expect(rows[1]!.errors).toEqual([]);
+    expect(rows[1]!.prev).toEqual({ roomKey: "r1", seatId: "r1-s1" });
+    expect(validRows(rows).map((r) => r.name)).toEqual(["Alice"]);
   });
 
   it("matches a seat label without room when unique", () => {
