@@ -105,6 +105,11 @@ export function ImportDialog({
   /** 表を読み込んだらヘッダー検出とマッピング推定 */
   const loadTable = (rows: string[][]) => {
     if (!rows.length) {
+      // 前の表を残すと、空のシートを選んだまま前のシートを取り込めてしまう
+      setTable([]);
+      setHasHeader(false);
+      setHeaderRow(0);
+      setMapping([]);
       setError(t("import.emptyData"));
       return;
     }
@@ -537,6 +542,16 @@ export function ImportDialog({
                   </span>
                 )}
               </div>
+              {error && (
+                <p
+                  className="text-destructive flex items-center gap-1.5 text-sm"
+                  role="alert"
+                  data-testid="import-map-error"
+                >
+                  <AlertCircle className="size-4" />
+                  {error}
+                </p>
+              )}
               <PreviewTable rows={rows} />
             </div>
           </div>
