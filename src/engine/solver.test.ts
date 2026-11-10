@@ -371,3 +371,19 @@ describe("incremental evaluation", () => {
     expect(full.score).toBeCloseTo(before, 6);
   });
 });
+
+describe("locks vs pins (regression)", () => {
+  it("does not reserve a pinned seat for a member locked elsewhere", () => {
+    const p = tinyProject({
+      rooms: [["r", 2]],
+      members: [{ id: "a" }, { id: "b" }],
+      assignment: { "r-0": "a" },
+      locks: ["r-0"],
+      rules: [rule({ type: "seat.pin", seatId: "r-1", memberId: "a" })],
+    });
+    const r = solve({ project: p, options: { seed: 1, ...fast } });
+    expect(r.assignment["r-0"]).toBe("a");
+    expect(r.assignment["r-1"]).toBe("b");
+    expect(r.unassigned).toEqual([]);
+  });
+});
