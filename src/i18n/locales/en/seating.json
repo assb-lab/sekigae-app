@@ -1,4 +1,233 @@
 {
   "title": "Seating",
-  "description": "Arrange with presets or shuffle, then fine-tune by dragging."
+  "description": "Arrange with presets or shuffle, then fine-tune by dragging.",
+  "canvas": {
+    "label": "Seating canvas. Arrow keys move between seats, Enter picks/places, L locks"
+  },
+  "a11y": {
+    "empty": "empty",
+    "picked": "Picked {{name}}",
+    "placed": "Placed {{name}} at {{seat}}"
+  },
+  "heatmap": "Depth heatmap",
+  "color": {
+    "label": "Color by",
+    "role": "Role",
+    "lab": "Lab",
+    "gender": "Gender",
+    "diff": "vs last year",
+    "noLab": "No lab"
+  },
+  "change": {
+    "sameSeat": "Same seat",
+    "sameRoom": "Same room",
+    "differentRoom": "Different room",
+    "new": "New",
+    "unassigned": "Unassigned"
+  },
+  "tray": {
+    "title": "Unassigned",
+    "search": "Search by name",
+    "filterRole": "Filter by role",
+    "filterLab": "Filter by lab",
+    "allRoles": "All roles",
+    "allLabs": "All labs",
+    "noMatch": "Nobody matches",
+    "allPlaced": "Everyone is seated",
+    "autoPlace": "Auto-place unassigned only",
+    "unassignAll": "Unseat everyone (keep locked)",
+    "unassign": "Unseat",
+    "shortage_one": "{{count}} seat short",
+    "shortage_other": "{{count}} seats short"
+  },
+  "drag": {
+    "locked": "Locked",
+    "created_one": "+{{count}} violation",
+    "created_other": "+{{count}} violations",
+    "resolved_one": "{{count}} resolved",
+    "resolved_other": "{{count}} resolved"
+  },
+  "lock": {
+    "lock": "Lock this seat",
+    "unlock": "Unlock",
+    "lockAll": "Lock all occupied seats",
+    "lockRoom": "Lock {{room}}",
+    "unlockAll": "Unlock all",
+    "toRules": "Convert locks to pin rules",
+    "toRulesDone_one": "Added {{count}} rule",
+    "toRulesDone_other": "Added {{count}} rules",
+    "title_one": "{{count}} locked seat",
+    "title_other": "{{count}} locked seats"
+  },
+  "shuffle": {
+    "button": "Shuffle",
+    "running": "Arranging…",
+    "seed": "Seed",
+    "seedHelp": "Enter the same seed to reproduce the same arrangement.",
+    "copied": "Seed copied",
+    "invalidSeed": "Invalid seed",
+    "reproduce": "Reproduce",
+    "reproNote": "If the run hits its time limit, results may vary slightly with computer speed.",
+    "undo": "Undo",
+    "doneOk_one": "All required rules satisfied ({{moved}} moved)",
+    "doneOk_other": "All required rules satisfied ({{moved}} moved)",
+    "doneWithViolations_one": "{{count}} required rule still violated ({{moved}} moved)",
+    "doneWithViolations_other": "{{count}} required rules still violated ({{moved}} moved)",
+    "scope": {
+      "label": "Shuffle scope",
+      "all": "Everything",
+      "rooms": "Selected rooms",
+      "unassignedOnly": "Unassigned only",
+      "pickRooms": "Pick the rooms to shuffle"
+    }
+  },
+  "presets": {
+    "apply": "Arrange with preset",
+    "recommended": "Recommended",
+    "saveAsRules": "Save as rules",
+    "savedAsRules_one": "Added {{count}} rule",
+    "savedAsRules_other": "Added {{count}} rules",
+    "nothingToSave": "These presets can't be saved as rules",
+    "needsPrevious": "Last year's seats haven't been entered yet",
+    "overwriteTitle": "Replace the current arrangement?",
+    "overwriteBody": "Create a new plan to keep the current one as it is.",
+    "overwrite": "Replace",
+    "newPlan": "Create new plan",
+    "cancel": "Cancel",
+    "mixLab": {
+      "name": "Mix labs",
+      "description": "Match each room's lab mix to the overall ratio and seat different labs side by side (for shared labs)."
+    },
+    "seniorBack": {
+      "name": "Seniors at the back",
+      "description": "Seats more senior members farther from the entrance."
+    },
+    "seniorFront": {
+      "name": "Seniors by the door",
+      "description": "Seats more senior members closer to the entrance."
+    },
+    "clusterLab": {
+      "name": "Group by lab",
+      "description": "Keeps each lab together in the same room and side by side."
+    },
+    "clusterRole": {
+      "name": "Group by year",
+      "description": "Seats people of the same role/year next to each other."
+    },
+    "mixRole": {
+      "name": "Mix years",
+      "description": "Neighbours have different roles/years where possible."
+    },
+    "keepPrevious": {
+      "name": "Keep last year",
+      "description": "Keeps people in last year's seats where possible."
+    },
+    "movePrevious": {
+      "name": "Everyone moves",
+      "description": "Moves people to a different room from last year where possible."
+    },
+    "nameOrder": {
+      "name": "Name order",
+      "description": "Seats people in name order along seat labels."
+    },
+    "random": {
+      "name": "Fully random",
+      "description": "Random arrangement that only keeps required rules."
+    }
+  },
+  "violations": {
+    "title": "Rule check",
+    "hard_one": "{{count}} required",
+    "hard_other": "{{count}} required",
+    "soft_one": "{{count}} preferred",
+    "soft_other": "{{count}} preferred",
+    "none": "All rules are satisfied",
+    "noRules": "No rules yet",
+    "amount_one": "Violation {{count}}",
+    "amount_other": "Violation {{count}}",
+    "people_one": "{{count}} person",
+    "people_other": "{{count}} people",
+    "score": "Score {{score}} (lower is better)"
+  },
+  "composition": {
+    "title": "Lab mix by room",
+    "overall": "Overall",
+    "imbalance": "Imbalance {{value}}"
+  },
+  "hover": {
+    "prevToNow": "Last year {{prev}} → this year {{now}}",
+    "unassigned": "Unassigned",
+    "editInMembers": "Edit in Members"
+  },
+  "plans": {
+    "title": "Plans",
+    "new": "New plan",
+    "newName": "Plan {{n}}",
+    "duplicate": "Duplicate this plan",
+    "copyName": "Copy of {{name}}",
+    "rename": "Rename",
+    "save": "Save",
+    "markFinal": "Mark as final",
+    "delete": "Delete this plan",
+    "deleteConfirm": "Delete “{{name}}”?",
+    "assigned_one": "{{count}} person",
+    "assigned_other": "{{count}} people",
+    "hard_one": "{{count}} violation",
+    "hard_other": "{{count}} violations"
+  },
+  "compare": {
+    "toggle": "Compare",
+    "adopt": "Adopt this plan",
+    "metric": "Metric",
+    "rows": {
+      "score": "Score (lower is better)",
+      "hard": "Required rule violations",
+      "soft": "Preferred rule violations",
+      "moved": "Moved to another room vs last year",
+      "differ": "People seated differently"
+    }
+  },
+  "year": {
+    "now": "This year",
+    "prev": "Last year",
+    "banner": "You are editing last year's seats. Drag to recreate last year's layout (synced with the Members list)."
+  },
+  "mobile": {
+    "search": "Find a seat by name",
+    "viewOnly": "View-only on phones. Please edit on a computer.",
+    "emptySeat": "Empty seat"
+  },
+  "empty": {
+    "title": "Let's get ready to seat people",
+    "body": "You need both rooms (with seats) and members to arrange seating.",
+    "toRooms": "Create rooms",
+    "toMembers": "Create the member list"
+  },
+  "diag": {
+    "title": "No arrangement satisfies all rules",
+    "body": "The required rules may be impossible to satisfy for these reasons.",
+    "openRules": "Review rules",
+    "close": "Close",
+    "notEnoughSeats": "Not enough seats ({{members}} people, {{seats}} seats).",
+    "emptyDomain": "There is no seat {{member}} can take (rule {{rule}} and others).",
+    "seatConflict": "Several people are pinned to the same seat {{seat}} ({{names}}).",
+    "restrictedSeatsShortage": "Not enough restricted seats ({{people}} people, {{seats}} seats).",
+    "danglingMember": "Rule {{rule}} refers to a deleted member.",
+    "danglingSeat": "Rule {{rule}} refers to a deleted seat.",
+    "danglingRoom": "Rule {{rule}} refers to a deleted room.",
+    "danglingLab": "Rule {{rule}} refers to a deleted lab.",
+    "incompleteRule": "Rule {{rule}} has unset fields.",
+    "softOnlyAsHard": "Rule {{rule}} is treated as preferred.",
+    "noPreviousPlan": "Rule {{rule}} needs last year's seats, which are not entered.",
+    "unknownPlan": "The plan was not found.",
+    "danglingLock": "There is a lock on a deleted seat."
+  },
+  "shortcuts": {
+    "shuffle": "Shuffle",
+    "moveFocus": "Move between seats",
+    "pickPlace": "Pick / place",
+    "lock": "Toggle lock",
+    "unassign": "Unseat",
+    "cancel": "Cancel selection"
+  }
 }
