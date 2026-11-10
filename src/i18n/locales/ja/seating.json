@@ -1,4 +1,232 @@
 {
   "title": "席配置",
-  "description": "プリセットやシャッフルで配置し、ドラッグで微調整します。"
+  "description": "プリセットやシャッフルで配置し、ドラッグで微調整します。",
+  "canvas": {
+    "label": "席配置キャンバス。矢印キーで席を移動、Enter で選択・配置、L でロック"
+  },
+  "a11y": {
+    "empty": "空席",
+    "picked": "{{name}} さんを選択しました",
+    "placed": "{{name}} さんを {{seat}} に配置しました"
+  },
+  "heatmap": "奥行きヒートマップ",
+  "color": {
+    "label": "色分け",
+    "role": "役職",
+    "lab": "研究室",
+    "gender": "性別",
+    "diff": "昨年度との差",
+    "noLab": "研究室なし"
+  },
+  "change": {
+    "sameSeat": "同じ席",
+    "sameRoom": "同じ部屋",
+    "differentRoom": "別の部屋",
+    "new": "新規",
+    "unassigned": "未配置"
+  },
+  "tray": {
+    "title": "未配置",
+    "search": "名前で検索",
+    "filterRole": "役職で絞り込み",
+    "filterLab": "研究室で絞り込み",
+    "allRoles": "すべての役職",
+    "allLabs": "すべての研究室",
+    "noMatch": "条件に合う人はいません",
+    "allPlaced": "全員配置済みです",
+    "autoPlace": "未配置の人だけ自動配置",
+    "unassignAll": "全員を外す（ロック席は残す）",
+    "unassign": "席から外す",
+    "shortage_one": "席が {{count}} 席足りません",
+    "shortage_other": "席が {{count}} 席足りません"
+  },
+  "drag": {
+    "locked": "ロック中",
+    "created_one": "違反 +{{count}}",
+    "created_other": "違反 +{{count}}",
+    "resolved_one": "解消 {{count}}",
+    "resolved_other": "解消 {{count}}"
+  },
+  "lock": {
+    "lock": "この席をロック",
+    "unlock": "ロックを解除",
+    "lockAll": "配置済みの席をすべてロック",
+    "lockRoom": "{{room}} をロック",
+    "unlockAll": "すべてのロックを解除",
+    "toRules": "ロックを固定ルールに変換",
+    "toRulesDone_one": "{{count}} 件のルールを追加しました",
+    "toRulesDone_other": "{{count}} 件のルールを追加しました",
+    "title_one": "ロック中の席: {{count}}",
+    "title_other": "ロック中の席: {{count}}"
+  },
+  "shuffle": {
+    "button": "シャッフル",
+    "running": "配置中…",
+    "seed": "シード",
+    "seedHelp": "同じシードを入力すると、同じ配置を再現できます。",
+    "copied": "シードをコピーしました",
+    "invalidSeed": "シードの形式が正しくありません",
+    "reproduce": "再現",
+    "reproNote": "時間上限で止まった場合は、PC の速さによって結果が少し変わることがあります。",
+    "undo": "元に戻す",
+    "doneOk_one": "必須ルールをすべて満たしました（{{moved}} 人が移動）",
+    "doneOk_other": "必須ルールをすべて満たしました（{{moved}} 人が移動）",
+    "doneWithViolations_one": "必須ルールの違反が {{count}} 件残っています（{{moved}} 人が移動）",
+    "doneWithViolations_other": "必須ルールの違反が {{count}} 件残っています（{{moved}} 人が移動）",
+    "scope": {
+      "label": "シャッフルの範囲",
+      "all": "全体",
+      "rooms": "選んだ部屋",
+      "unassignedOnly": "未配置の人だけ"
+    }
+  },
+  "presets": {
+    "apply": "このプリセットで配置",
+    "recommended": "おすすめ",
+    "saveAsRules": "ルールとして保存",
+    "savedAsRules_one": "{{count}} 件のルールを追加しました",
+    "savedAsRules_other": "{{count}} 件のルールを追加しました",
+    "nothingToSave": "このプリセットはルールにできません",
+    "needsPrevious": "昨年度の席がまだ入力されていません",
+    "overwriteTitle": "現在の配置を置き換えますか？",
+    "overwriteBody": "新しい案として作成すると、今の案はそのまま残ります。",
+    "overwrite": "置き換える",
+    "newPlan": "新しい案を作成",
+    "cancel": "キャンセル",
+    "mixLab": {
+      "name": "研究室ミックス",
+      "description": "各部屋の研究室の比率を全体に近づけ、隣同士は別の研究室にします（複合研究室向け）。"
+    },
+    "seniorBack": {
+      "name": "奥ほど上級生",
+      "description": "入口から遠い席ほど役職・学年が上の人を配置します。"
+    },
+    "seniorFront": {
+      "name": "入口側ほど上級生",
+      "description": "入口に近い席ほど役職・学年が上の人を配置します。"
+    },
+    "clusterLab": {
+      "name": "研究室ごとにまとめる",
+      "description": "同じ研究室の人を同じ部屋・隣同士に集めます。"
+    },
+    "clusterRole": {
+      "name": "学年ごとにまとめる",
+      "description": "同じ役職・学年の人を隣同士に集めます。"
+    },
+    "mixRole": {
+      "name": "学年ミックス",
+      "description": "隣同士の役職・学年がなるべく異なるようにします。"
+    },
+    "keepPrevious": {
+      "name": "昨年度を維持",
+      "description": "できるだけ昨年度と同じ席にします。"
+    },
+    "movePrevious": {
+      "name": "全員お引越し",
+      "description": "できるだけ昨年度と別の部屋にします。"
+    },
+    "nameOrder": {
+      "name": "名前順",
+      "description": "席番号の順に名前（ふりがな）順で並べます。"
+    },
+    "random": {
+      "name": "完全ランダム",
+      "description": "必須ルールだけを守ってランダムに配置します。"
+    }
+  },
+  "violations": {
+    "title": "ルールのチェック",
+    "hard_one": "必須 {{count}}",
+    "hard_other": "必須 {{count}}",
+    "soft_one": "できれば {{count}}",
+    "soft_other": "できれば {{count}}",
+    "none": "すべてのルールを満たしています",
+    "noRules": "ルールはまだありません",
+    "amount_one": "違反量 {{count}}",
+    "amount_other": "違反量 {{count}}",
+    "people_one": "{{count}} 人",
+    "people_other": "{{count}} 人",
+    "score": "スコア {{score}}（小さいほど良い）"
+  },
+  "composition": {
+    "title": "部屋ごとの研究室構成",
+    "overall": "全体",
+    "imbalance": "偏り {{value}}"
+  },
+  "hover": {
+    "prevToNow": "昨年度 {{prev}} → 今年度 {{now}}",
+    "unassigned": "未配置",
+    "editInMembers": "名簿で編集"
+  },
+  "plans": {
+    "title": "配置案",
+    "new": "新しい案",
+    "newName": "案{{n}}",
+    "duplicate": "この案を複製",
+    "copyName": "{{name}} のコピー",
+    "rename": "名前を変更",
+    "save": "保存",
+    "markFinal": "確定案にする",
+    "delete": "この案を削除",
+    "deleteConfirm": "「{{name}}」を削除しますか？",
+    "assigned_one": "{{count}} 人",
+    "assigned_other": "{{count}} 人",
+    "hard_one": "違反 {{count}}",
+    "hard_other": "違反 {{count}}"
+  },
+  "compare": {
+    "toggle": "比較",
+    "adopt": "この案を採用",
+    "metric": "指標",
+    "rows": {
+      "score": "スコア（小さいほど良い）",
+      "hard": "必須ルール違反",
+      "soft": "できればルール違反",
+      "moved": "昨年度から部屋が変わった人",
+      "differ": "2 案で席が違う人"
+    }
+  },
+  "year": {
+    "now": "今年度",
+    "prev": "昨年度",
+    "banner": "昨年度の席を編集しています。ドラッグで昨年度の配置を再現できます（名簿の「昨年度の席」と連動）。"
+  },
+  "mobile": {
+    "search": "名前で席を探す",
+    "viewOnly": "スマートフォンでは閲覧のみです。編集は PC で行ってください。",
+    "emptySeat": "空席です"
+  },
+  "empty": {
+    "title": "席配置の準備をしましょう",
+    "body": "席を配置するには、部屋（席）と名簿の両方が必要です。",
+    "toRooms": "部屋を作る",
+    "toMembers": "名簿を作る"
+  },
+  "diag": {
+    "title": "すべてのルールを満たす配置が見つかりません",
+    "body": "次の理由で、必須ルールを満たせない可能性があります。",
+    "openRules": "ルールを見直す",
+    "close": "閉じる",
+    "notEnoughSeats": "席が足りません（人数 {{members}} 人に対して席は {{seats}} 席）。",
+    "emptyDomain": "{{member}} さんが座れる席がありません（ルール {{rule}} などの組み合わせ）。",
+    "seatConflict": "同じ席 {{seat}} に複数の人が固定されています（{{names}}）。",
+    "restrictedSeatsShortage": "条件付きの席が足りません（対象 {{people}} 人に対して {{seats}} 席）。",
+    "danglingMember": "ルール {{rule}} が削除済みのメンバーを参照しています。",
+    "danglingSeat": "ルール {{rule}} が削除済みの席を参照しています。",
+    "danglingRoom": "ルール {{rule}} が削除済みの部屋を参照しています。",
+    "danglingLab": "ルール {{rule}} が削除済みの研究室を参照しています。",
+    "incompleteRule": "ルール {{rule}} に未設定の項目があります。",
+    "softOnlyAsHard": "ルール {{rule}} は「できれば」として扱われます。",
+    "noPreviousPlan": "ルール {{rule}} は昨年度の席が必要ですが、未入力です。",
+    "unknownPlan": "配置案が見つかりません。",
+    "danglingLock": "削除済みの席のロックがあります。"
+  },
+  "shortcuts": {
+    "shuffle": "シャッフル",
+    "moveFocus": "席の間を移動",
+    "pickPlace": "選択 / 配置",
+    "lock": "ロックの切替",
+    "unassign": "席から外す",
+    "cancel": "選択を解除"
+  }
 }
