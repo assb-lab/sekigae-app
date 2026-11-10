@@ -143,13 +143,18 @@ export function ConditionBuilder<K extends Kind>({ kind, value, onChange, color 
                 color={color}
                 onChange={(leaf) => setItem(i, { ...item, leaf })}
                 onNot={() => setItem(i, { ...item, not: !item.not })}
-                onGroup={() =>
-                  setItem(i, {
-                    id: item.id,
-                    kind: "group",
-                    op: model.op === "and" ? "or" : "and",
-                    leaves: [item.leaf, newLeaf()],
-                  })
+                // グループ内の条件は「でない」を持てないので、否定中の条件はグループ化しない
+                // （否定が消えて対象が反転するのを防ぐ）
+                onGroup={
+                  item.not
+                    ? undefined
+                    : () =>
+                        setItem(i, {
+                          id: item.id,
+                          kind: "group",
+                          op: model.op === "and" ? "or" : "and",
+                          leaves: [item.leaf, newLeaf()],
+                        })
                 }
                 onRemove={() => removeItem(i)}
               />

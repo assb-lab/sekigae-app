@@ -24,7 +24,7 @@ import type { ID } from "@/domain/schema";
 import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/store/project";
 import { useProject } from "@/store/selectors";
-import { danglingCount, stripDangling, type Dangling } from "../analysis";
+import { danglingCount, repairDangling, type Dangling } from "../analysis";
 import { childDragId, dropOnStack, gapId, type DragData, type DropData } from "../dnd";
 import { useRT, useSummaryCtx } from "../hooks";
 import { BLOCKS, CATEGORY_COLORS, validateRule, type BlockIssue } from "../registry";
@@ -270,7 +270,7 @@ function IssuesFooter({
             type="button"
             className="font-semibold underline-offset-2 hover:underline"
             data-testid="fix-dangling"
-            onClick={() => s().setRuleBlock(rule.id, stripDangling(rule.block, project))}
+            onClick={() => s().updateRule(rule.id, repairDangling(rule, project))}
           >
             {t("warnings.removeRefs")}
           </button>

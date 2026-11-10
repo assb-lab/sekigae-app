@@ -82,4 +82,27 @@ describe("project store", () => {
     s().removePlan(dup);
     expect(s().project.activePlanId).toBe(only);
   });
+
+  it("keeps a current plan when the active plan becomes last year's", () => {
+    const active = s().project.activePlanId;
+    s().setPreviousPlan(active);
+    const p = s().project;
+    expect(p.previousPlanId).toBe(active);
+    const current = p.plans.filter((x) => x.kind === "current");
+    expect(current).toHaveLength(1);
+    expect(p.activePlanId).toBe(current[0]!.id);
+    s().removePlan(p.activePlanId); // 最後の今年度案は消えない（例外にもならない）
+    expect(s().project.plans.filter((x) => x.kind === "current")).toHaveLength(1);
+  });
+
+  it("rejects seats outside the room even if the flat index is valid", () => {
+    const roomId = s().addRoom({ name: "A", width: 2, height: 2 });
+    expect(
+      s().addSeats(roomId, [
+        { x: 2, y: 0 },
+        { x: -1, y: 1 },
+      ]),
+    ).toEqual([]);
+    expect(s().addSeats(roomId, [{ x: 1, y: 1 }])).toHaveLength(1);
+  });
 });
