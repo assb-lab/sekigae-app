@@ -125,6 +125,7 @@ export function createLayoutSlice(update: Update, _get: Get): LayoutSlice {
       const ids: ID[] = [];
       withRoom(roomId, (r) => {
         for (const s of seats) {
+          if (s.x < 0 || s.y < 0 || s.x >= r.width || s.y >= r.height) continue;
           if (r.seats.some((x) => x.x === s.x && x.y === s.y)) continue;
           if (r.cells[s.y * r.width + s.x] !== "floor") continue;
           const seat: Seat = {
