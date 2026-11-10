@@ -151,6 +151,49 @@ function stripSeat(e: SeatExpr, k: Known): SeatExpr {
   }
 }
 
+/**
+ * 参照切れを取り除くと対象が広がってしまうか。
+ * 部屋の指定（rooms / 奥行きの roomIds）は空配列 = すべての部屋 なので、
+ * 指定していた部屋がすべて削除済みだと「全部屋」に化けてしまう。
+ */
+export function stripWouldBroaden(
+  b: RuleBlock,
+  project: Project,
+  k: Known = known(project),
+): boolean {
+  const allGone = (ids: readonly string[]) => ids.length > 0 && ids.every((id) => !k.rooms.has(id));
+  const seatExpr = (e: SeatExpr): boolean => {
+    switch (e.op) {
+      case "depth":
+        return allGone(e.roomIds);
+      case "and":
+      case "or":
+        return e.args.some(seatExpr);
+      case "not":
+        return seatExpr(e.arg);
+      default:
+        return false;
+    }
+  };
+  if ("rooms" in b && Array.isArray(b.rooms) && allGone(b.rooms)) return true;
+  if ("seats" in b && seatExpr(b.seats)) return true;
+  if (b.type === "logic.any" || b.type === "logic.all")
+    return b.children.some((c) => stripWouldBroaden(c, project, k));
+  if (b.type === "logic.ifThen")
+    return [b.condition, b.then].some((c) => !!c && stripWouldBroaden(c, project, k));
+  return false;
+}
+
+/** 参照切れを修復する。対象が広がる場合はルールを無効にして、勝手に全部屋へ広げない */
+export function repairDangling(
+  rule: Rule,
+  project: Project,
+): { block: RuleBlock; enabled: boolean } {
+  const k = known(project);
+  const broaden = stripWouldBroaden(rule.block, project, k);
+  return { block: stripDangling(rule.block, project, k), enabled: broaden ? false : rule.enabled };
+}
+
 /** 参照切れを取り除いたブロック（単一参照は null = 未設定に戻す） */
 export function stripDangling(
   b: RuleBlock,
