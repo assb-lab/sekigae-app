@@ -19,12 +19,12 @@
   --muted-foreground: oklch(0.5 0.02 260);
   --accent: oklch(0.94 0.02 262);
   --accent-foreground: oklch(0.25 0.03 262);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.53 0.22 27.325);
   --border: oklch(0.91 0.008 255);
   --input: oklch(0.91 0.008 255);
   --ring: oklch(0.6 0.15 262);
-  --success: oklch(0.62 0.15 155);
-  --warning: oklch(0.75 0.15 75);
+  --success: oklch(0.5 0.13 155);
+  --warning: oklch(0.56 0.13 65);
   --sidebar: oklch(0.975 0.004 255);
   --sidebar-foreground: oklch(0.18 0.02 260);
   --sidebar-border: oklch(0.91 0.008 255);
@@ -227,4 +227,12 @@
 }
 .driver-popover.sekigae-tour .driver-popover-arrow-side-bottom.driver-popover-arrow {
   border-bottom-color: var(--popover);
+}
+
+/* トースト（sonner）の色を WCAG AA のコントラストに調整 */
+html [data-sonner-toaster][data-sonner-theme="light"] {
+  --success-text: hsl(140 100% 21%);
+  --info-text: hsl(210 92% 33%);
+  --warning-text: hsl(31 92% 28%);
+  --error-text: hsl(360 100% 36%);
 }

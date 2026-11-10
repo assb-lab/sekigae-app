@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, lazyPlugins } from "vite-plus";
+import pkg from "./package.json" with { type: "json" };
 
 // https://viteplus.dev/config/
 export default defineConfig({
@@ -10,7 +11,37 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   worker: { format: "es" },
+  build: {
+    // XLSX / PPTX ライブラリは出力時だけ遅延ロードされる別チャンク
+    chunkSizeWarningLimit: 1000,
+    rolldownOptions: {
+      output: {
+        // よく変わらないライブラリを分けてキャッシュを効かせる（遅延ロード分は含めない）
+        codeSplitting: {
+          groups: [
+            {
+              name: "react",
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 30,
+            },
+            { name: "radix", test: /node_modules[\\/](@radix-ui|radix-ui)[\\/]/, priority: 20 },
+            {
+              name: "i18n",
+              test: /node_modules[\\/](i18next|react-i18next|i18next-browser-languagedetector)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: "motion",
+              test: /node_modules[\\/](motion|framer-motion|motion-dom|motion-utils)[\\/]/,
+              priority: 20,
+            },
+          ],
+        },
+      },
+    },
+  },
   fmt: {
     ignorePatterns: ["src/components/ui/**", "pnpm-lock.yaml", "dist/**"],
   },

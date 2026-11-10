@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Strength, Weight } from "@/domain/rules";
+import { HelpTip } from "@/components/HelpTip";
 import { cn } from "@/lib/utils";
 import { useRT } from "../hooks";
 import type { BlockDefinition } from "../registry";
@@ -72,7 +73,7 @@ export function StrengthToggle({
           on
             ? s === "hard"
               ? "bg-foreground text-background shadow-sm"
-              : "bg-(--cat) text-white shadow-sm"
+              : "bg-background text-foreground ring-2 ring-(--cat) shadow-sm"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
@@ -209,7 +210,7 @@ export function BlockShell({
           {badges}
           {violationCount !== undefined && violationCount > 0 && (
             <span
-              className="bg-destructive rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+              className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white"
               data-testid="violation-badge"
             >
               {t("shell.violations", { n: violationCount })}
@@ -223,6 +224,7 @@ export function BlockShell({
               hardAllowed={def.hardAllowed}
             />
           )}
+          {!child && onStrengthChange && <HelpTip term="strength" />}
           {!child && strength === "soft" && onWeightChange && (
             <WeightDots value={weight} onChange={onWeightChange} />
           )}

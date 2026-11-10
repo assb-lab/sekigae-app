@@ -84,7 +84,7 @@ export function RoomListPanel() {
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={rooms.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-            <ul className="space-y-1 px-2 pb-3" role="listbox" aria-label={t("list.title")}>
+            <ul className="space-y-1 px-2 pb-3" aria-label={t("list.title")}>
               {rooms.map((r) => (
                 <RoomRow key={r.id} room={r} />
               ))}
@@ -122,8 +122,7 @@ const RoomRow = memo(function RoomRow({ room }: { room: Room }) {
         rowRef.current = el;
       }}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      role="option"
-      aria-selected={selected}
+      aria-current={selected ? "true" : undefined}
       data-testid="room-row"
       data-room-id={room.id}
       className={cn(

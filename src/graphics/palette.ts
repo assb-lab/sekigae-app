@@ -85,7 +85,10 @@ export function readableText(hex: string): string {
   ];
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  return L > 0.45 ? "#0f172a" : "#ffffff";
+  // 白（L=1）と濃紺（#0f172a, L≈0.0095）のうちコントラスト比が高いほう（WCAG）
+  const onWhite = 1.05 / (L + 0.05);
+  const onDark = (L + 0.05) / (0.0095 + 0.05);
+  return onDark >= onWhite ? "#0f172a" : "#ffffff";
 }
 
 /** HEX に透明度を付ける */

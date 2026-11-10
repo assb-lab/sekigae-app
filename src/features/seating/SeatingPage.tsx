@@ -6,6 +6,7 @@ import { CalendarClock, Flame, LayoutGrid, Users } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useViewport } from "@/components/canvas";
+import { HelpTip } from "@/components/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import type { ID } from "@/domain/schema";
@@ -146,6 +147,7 @@ export default function SeatingPage() {
           >
             <Flame />
           </Toggle>
+          <HelpTip term="depth" />
         </div>
         {!isPrevious && !comparing && <PresetGallery solver={solver} />}
         {isPrevious && (

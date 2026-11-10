@@ -3,6 +3,7 @@ import { Copy, Dices, Loader2, Lock, LockOpen, Pin, Square } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { HelpTip } from "@/components/HelpTip";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -189,6 +190,7 @@ export function ShuffleControls({ solver, plan }: { solver: SeatingSolver; plan:
           )}
         </PopoverContent>
       </Popover>
+      <HelpTip term="seed" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

@@ -20,6 +20,21 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /mobile\..*spec\.ts/ },
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /mobile\..*spec\.ts/ },
+    // クロスブラウザ確認（PW_ALL_BROWSERS=1 のときだけ。事前に playwright install firefox webkit）
+    ...(process.env.PW_ALL_BROWSERS
+      ? [
+          {
+            name: "firefox",
+            use: { ...devices["Desktop Firefox"] },
+            testIgnore: /mobile\..*spec\.ts/,
+          },
+          {
+            name: "webkit",
+            use: { ...devices["Desktop Safari"] },
+            testIgnore: /mobile\..*spec\.ts/,
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: `pnpm exec vp preview --port ${PORT} --strictPort`,

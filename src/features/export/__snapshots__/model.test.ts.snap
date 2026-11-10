@@ -22,12 +22,12 @@ exports[`buildExportModel > matches the snapshot (en, lab colors, minimal column
     {
       "fill": "#16a34a",
       "label": "Lab 3",
-      "text": "#ffffff",
+      "text": "#0f172a",
     },
     {
       "fill": "#d97706",
       "label": "Lab 4",
-      "text": "#ffffff",
+      "text": "#0f172a",
     },
   ],
   "planName": "案A",
@@ -173,7 +173,7 @@ exports[`buildExportModel > matches the snapshot (ja, role colors, all columns) 
     {
       "fill": "#3b82f6",
       "label": "D1",
-      "text": "#ffffff",
+      "text": "#0f172a",
     },
     {
       "fill": "#c2410c",
@@ -188,7 +188,7 @@ exports[`buildExportModel > matches the snapshot (ja, role colors, all columns) 
     {
       "fill": "#22a04b",
       "label": "M1",
-      "text": "#ffffff",
+      "text": "#0f172a",
     },
     {
       "fill": "#0e7490",
