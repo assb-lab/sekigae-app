@@ -8,6 +8,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Pencil } from "lucide-react";
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -160,6 +161,8 @@ export function MembersTable(props: MembersTableProps) {
   const { t } = useTranslation(["members", "common"]);
   const [active, setActive] = useState<Active | null>(null);
   const [editing, setEditing] = useState<{ initial: string } | null>(null);
+  /** 編集中のエディタの現在値（マウスで別セルへ移るときに確定するため） */
+  const editorValue = useRef<(() => string) | null>(null);
   const [prevOpen, setPrevOpen] = useState<ID | null>(null);
   const focusPending = useRef(false);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -220,6 +223,24 @@ export function MembersTable(props: MembersTableProps) {
       setEditing({ initial: initial ?? rawValue(m, a.col) });
     },
     [readOnly, rows, rowIndex],
+  );
+
+  const registerEditor = useCallback((get: (() => string) | null) => {
+    editorValue.current = get;
+  }, []);
+
+  /** セルを選ぶ。編集中なら、選び直す前に元のセルの入力を確定する */
+  const activate = useCallback(
+    (a: Active) => {
+      if (editing && active && editorValue.current) {
+        const m = rows[rowIndex(active.row)]?.member;
+        if (m) commitCell(m, active.col, editorValue.current());
+        editorValue.current = null;
+      }
+      setEditing(null);
+      setActive(a);
+    },
+    [editing, active, rows, rowIndex],
   );
 
   const finishEdit = useCallback(
@@ -363,7 +384,8 @@ export function MembersTable(props: MembersTableProps) {
               activeCol={active?.row === r.member.id ? active.col : null}
               editing={active?.row === r.member.id ? editing : null}
               prevOpen={prevOpen === r.member.id}
-              onActivate={setActive}
+              onActivate={activate}
+              registerEditor={registerEditor}
               onStartEdit={startEdit}
               onFinishEdit={finishEdit}
               onPrevOpenChange={(open) => {
@@ -392,6 +414,7 @@ interface RowProps {
   onActivate: (a: Active) => void;
   onStartEdit: (a: Active) => void;
   onFinishEdit: (value: string | null, move: Move | null) => void;
+  registerEditor: (get: (() => string) | null) => void;
   onPrevOpenChange: (open: boolean) => void;
   onToggleSelect: (id: ID, range: boolean) => void;
   onOpenEdit: (id: ID) => void;
@@ -404,7 +427,13 @@ const MemberRowView = memo(function MemberRowView(p: RowProps) {
     const isEditing = p.activeCol === col && p.editing;
     if (isEditing)
       return (
-        <CellEditor col={col} initial={p.editing!.initial} labs={p.labs} onDone={p.onFinishEdit} />
+        <CellEditor
+          col={col}
+          initial={p.editing!.initial}
+          labs={p.labs}
+          onDone={p.onFinishEdit}
+          register={p.registerEditor}
+        />
       );
     switch (col) {
       case "name":
@@ -528,15 +557,26 @@ function CellEditor({
   initial,
   labs,
   onDone,
+  register,
 }: {
   col: ColumnKey;
   initial: string;
   labs: readonly Lab[];
   onDone: (value: string | null, move: Move | null) => void;
+  register?: (get: (() => string) | null) => void;
 }) {
   const { t } = useTranslation(["members", "common"]);
   const [value, setValue] = useState(initial);
   const done = useRef(false);
+  const valueRef = useRef(initial);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+  // 親が「別セルをクリック」で確定できるよう、現在値の取得関数を登録する
+  useEffect(() => {
+    register?.(() => valueRef.current);
+    return () => register?.(null);
+  }, [register]);
   const ref = useRef<HTMLInputElement & HTMLSelectElement>(null);
   // 続けて打鍵された文字を取りこぼさないよう、描画直後に同期的にフォーカス
   useLayoutEffect(() => {

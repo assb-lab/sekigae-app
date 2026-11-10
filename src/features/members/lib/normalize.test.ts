@@ -211,6 +211,9 @@ describe("labs", () => {
 describe("parseTags / seatLabelKey", () => {
   it("splits tags", () => {
     expect(parseTags("留学生, 車椅子、窓側;留学生")).toEqual(["留学生", "車椅子", "窓側"]);
+    // セル内改行で区切られたタグ（Excel / CSV 取込）
+    expect(parseTags("wheelchair\nquiet")).toEqual(["wheelchair", "quiet"]);
+    expect(parseTags("留学生\r\n車椅子")).toEqual(["留学生", "車椅子"]);
     expect(parseTags("")).toEqual([]);
     expect(parseTags(undefined)).toEqual([]);
   });

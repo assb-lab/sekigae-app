@@ -151,7 +151,7 @@ export function PlanBar() {
           <Button
             size="sm"
             variant={compare.on ? "default" : "ghost"}
-            disabled={plans.length < 2}
+            disabled={plans.length < 2 && !compare.on}
             onClick={() =>
               setCompare({
                 on: !compare.on,

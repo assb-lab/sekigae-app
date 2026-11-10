@@ -59,7 +59,7 @@ export function beginDrag(
   fromSeatId: ID | null,
   opts: { onClick?: () => void } = {},
 ) {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || useSeatingUi.getState().solving) return;
   // 文字選択やブラウザ標準のドラッグが始まると pointercancel で中断されるので止める
   e.preventDefault?.();
   const start = { x: e.clientX, y: e.clientY };

@@ -50,6 +50,7 @@ export function useSolver(planId?: ID): UseSolver {
   const [result, setResult] = useState<SolveResult | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const resultRef = useRef<SolveResult | null>(null);
+  const runSeq = useRef(0);
 
   useEffect(
     () => () => {
@@ -89,6 +90,9 @@ export function useSolver(planId?: ID): UseSolver {
       const { planId: pidOpt, apply: doApply = true, ...solveOptions } = options;
       const pid = resolvePlan(pidOpt);
       const project = useProjectStore.getState().project;
+      // 実行ごとの識別子。新しい実行に置き換えられた古い実行は状態を更新しない
+      const runId = ++runSeq.current;
+      const isCurrent = () => runSeq.current === runId;
       setStatus("running");
       setProgress(null);
       setError(null);
@@ -97,6 +101,7 @@ export function useSolver(planId?: ID): UseSolver {
           { project, planId: pid, options: solveOptions },
           setProgress,
         );
+        if (!isCurrent()) return null;
         resultRef.current = res;
         setResult(res);
         setStatus("done");
@@ -104,9 +109,10 @@ export function useSolver(planId?: ID): UseSolver {
         return res;
       } catch (e) {
         if (e instanceof SolveCancelledError) {
-          setStatus((s) => (s === "running" ? "cancelled" : s));
+          if (isCurrent()) setStatus((s) => (s === "running" ? "cancelled" : s));
           return null;
         }
+        if (!isCurrent()) return null;
         setError(e instanceof Error ? e : new Error(String(e)));
         setStatus("error");
         return null;
@@ -116,6 +122,7 @@ export function useSolver(planId?: ID): UseSolver {
   );
 
   const cancel = useCallback(() => {
+    runSeq.current++; // 進行中の実行の結果を無視する
     clientRef.current?.cancel();
     setStatus((s) => (s === "running" ? "cancelled" : s));
   }, []);

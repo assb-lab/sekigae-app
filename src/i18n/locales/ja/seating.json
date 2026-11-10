@@ -77,7 +77,8 @@
       "label": "シャッフルの範囲",
       "all": "全体",
       "rooms": "選んだ部屋",
-      "unassignedOnly": "未配置の人だけ"
+      "unassignedOnly": "未配置の人だけ",
+      "pickRooms": "シャッフルする部屋を選んでください"
     }
   },
   "presets": {

@@ -468,4 +468,21 @@ test.describe("members", () => {
     await expect(cell(page, "学部生", "role")).toHaveText("B4");
     await expect(cell(page, "社会人1", "prev")).toHaveText("—");
   });
+
+  test("clicking another cell commits the pending edit without touching the clicked cell", async ({
+    freshPage: page,
+  }) => {
+    await openMembers(page);
+    await seed(page, [
+      { name: "Aoki", role: "m1", lab: 0 },
+      { name: "Inoue", role: "m2", lab: 0 },
+    ]);
+    await page.getByTestId("sort-name").click();
+    await cell(page, "Aoki", "name").dblclick();
+    await page.getByTestId("cell-editor-name").fill("Aoki Jiro");
+    await cell(page, "Inoue", "kana").click();
+    await expect(cell(page, "Aoki Jiro", "name")).toHaveText(/Aoki Jiro/);
+    await expect(cell(page, "Inoue", "kana")).toHaveText("");
+    await expect(page.getByTestId("cell-editor-name")).toHaveCount(0);
+  });
 });

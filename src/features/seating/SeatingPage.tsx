@@ -39,12 +39,17 @@ const COMPOSITION_RULES = new Set(["room.attrCap", "room.diversity", "group.labB
 export default function SeatingPage() {
   const { t } = useTranslation("seating");
   const project = useProjectStore((s) => s.project);
+  const currentPlanCount = project.plans.filter((p) => p.kind === "current").length;
   const rooms = useRooms();
   const labs = useLabIndex();
   const { plan, isPrevious } = useTargetPlan();
   const [colorMode, setColorMode] = useColorMode();
   const [heatmap, setHeatmap] = useSeatingHeatmap();
   const compare = useSeatingUi((s) => s.compare);
+  const solving = useSeatingUi((s) => s.solving);
+  const comparing = compare.on && !isPrevious && currentPlanCount >= 2;
+  // 案が 1 つになったら比較モードは表示しない（比較を抜けられなくなるのを防ぐ）
+
   const isMobile = useIsMobile();
   const viewport = useViewport();
   const solver = useSeatingSolver();
@@ -130,7 +135,7 @@ export default function SeatingPage() {
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="mr-2 text-lg font-semibold tracking-tight">{t("title")}</h1>
           <PlanBar />
-          {!isPrevious && !compare.on && <ShuffleControls solver={solver} plan={plan} />}
+          {!isPrevious && !comparing && <ShuffleControls solver={solver} plan={plan} />}
           <span className="flex-1" />
           <ColorModeToggle mode={colorMode} onChange={setColorMode} />
           <Toggle
@@ -144,7 +149,7 @@ export default function SeatingPage() {
           </Toggle>
           <HelpTip term="depth" />
         </div>
-        {!isPrevious && !compare.on && <PresetGallery solver={solver} />}
+        {!isPrevious && !comparing && <PresetGallery solver={solver} />}
         {isPrevious && (
           <div
             className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-sm text-amber-700 dark:text-amber-300"
@@ -156,7 +161,7 @@ export default function SeatingPage() {
         )}
       </div>
 
-      {compare.on && !isPrevious ? (
+      {comparing ? (
         <CompareView colorMode={colorMode} />
       ) : (
         <div className="flex min-h-0 flex-1">
@@ -181,6 +186,7 @@ export default function SeatingPage() {
               plan={plan}
               colorMode={colorMode}
               viewport={viewport}
+              editable={!solving}
               violationMembers={violationMembers}
               violationSeats={violationSeats}
               warnRoomIds={warnRoomIds}

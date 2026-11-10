@@ -140,3 +140,28 @@ describe("related filters", () => {
     expect(ruleRelatesToRoom(seat, "r2", project)).toBe(true);
   });
 });
+
+describe("repairDangling (regression)", () => {
+  it("disables a rule whose only room was deleted instead of broadening it to all rooms", async () => {
+    const { makeProject } = await import("@/test/factories");
+    const { createRule } = await import("@/domain/factory");
+    const p = makeProject("small");
+    const rule = createRule({
+      type: "room.exclude",
+      rooms: ["deleted-room"],
+      people: { op: "all" },
+    });
+    const { repairDangling, stripWouldBroaden } = await import("./analysis");
+    expect(stripWouldBroaden(rule.block, p)).toBe(true);
+    const fixed = repairDangling(rule, p);
+    expect(fixed.enabled).toBe(false);
+    // 一部だけ削除済みなら、残りの部屋で有効なまま
+    const r1 = p.layout.rooms[0]!.id;
+    const partial = createRule({
+      type: "room.exclude",
+      rooms: ["deleted-room", r1],
+      people: { op: "all" },
+    });
+    expect(repairDangling(partial, p)).toMatchObject({ enabled: true, block: { rooms: [r1] } });
+  });
+});

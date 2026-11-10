@@ -50,8 +50,12 @@ describe("placement", () => {
       after: 1,
     });
     expect(d.created).toEqual(["r3"]);
-    expect(d.resolved).toEqual(["r1"]);
+    expect(d.resolved.sort()).toEqual(["r1", "r2"]);
     expect(d.hardDelta).toBe(0);
+    // 完全に解消した必須違反も数える
+    const full = ruleDelta([v("r1", 2)], [], { before: 2, after: 0 });
+    expect(full.resolved).toEqual(["r1"]);
+    expect(full.hardDelta).toBe(-2);
   });
 });
 
