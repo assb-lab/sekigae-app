@@ -8,6 +8,7 @@ import type { ID } from "@/domain/schema";
 import type { Diagnostic, PresetId, SolveResult, SolveScope } from "@/engine";
 import { useSolver } from "@/features/engine";
 import { history, useProjectStore } from "@/store/project";
+import { useSeatingUi } from "./seatingStore";
 
 export interface ShuffleRequest {
   presets: PresetId[];
@@ -38,14 +39,20 @@ export function useSeatingSolver() {
       if (req.newPlanName) s.duplicatePlan(s.project.activePlanId, req.newPlanName);
       const planId = useProjectStore.getState().project.activePlanId;
       setTrail([]);
-      const result = await solver.run({
-        planId,
-        apply: false,
-        presets: req.presets,
-        scope: req.scope,
-        seed: req.seed,
-        mode: req.mode,
-      });
+      useSeatingUi.getState().setSolving(true);
+      let result: SolveResult | null;
+      try {
+        result = await solver.run({
+          planId,
+          apply: false,
+          presets: req.presets,
+          scope: req.scope,
+          seed: req.seed,
+          mode: req.mode,
+        });
+      } finally {
+        useSeatingUi.getState().setSolving(false);
+      }
       if (!result) return null;
       const diff = solver.diff(result, planId);
       solver.apply(result, planId);

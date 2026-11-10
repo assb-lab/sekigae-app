@@ -25,6 +25,9 @@ export interface SeatingUiState {
   hover: { memberId: ID; x: number; y: number } | null;
   presets: PresetId[];
   compare: { on: boolean; otherPlanId: ID | null };
+  /** ソルバー実行中（配置・ロックの編集を止める） */
+  solving: boolean;
+  setSolving: (v: boolean) => void;
   setPicked: (id: ID | null) => void;
   setFocusSeat: (id: ID | null) => void;
   toggleRoom: (id: ID) => void;
@@ -46,6 +49,8 @@ export const useSeatingUi = create<SeatingUiState>()((set) => ({
   hover: null,
   presets: [DEFAULT_PRESET],
   compare: { on: false, otherPlanId: null },
+  solving: false,
+  setSolving: (solving) => set({ solving }),
   setPicked: (pickedMemberId) => set({ pickedMemberId }),
   setFocusSeat: (focusSeatId) => set({ focusSeatId }),
   toggleRoom: (id) =>

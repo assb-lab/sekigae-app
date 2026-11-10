@@ -77,7 +77,8 @@
       "label": "Shuffle scope",
       "all": "Everything",
       "rooms": "Selected rooms",
-      "unassignedOnly": "Unassigned only"
+      "unassignedOnly": "Unassigned only",
+      "pickRooms": "Pick the rooms to shuffle"
     }
   },
   "presets": {

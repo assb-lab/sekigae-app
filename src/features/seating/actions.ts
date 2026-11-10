@@ -8,6 +8,10 @@ import { batch, useProjectStore } from "@/store/project";
 import { activePlan, previousPlan } from "@/store/selectors";
 import { useUiStore } from "@/store/ui";
 import { applyDrop, canDrop, type DropOutcome, type DropTarget } from "./lib/placement";
+import { useSeatingUi } from "./seatingStore";
+
+/** ソルバー実行中は配置・ロックを変更しない（結果の適用で手動の変更が失われるため） */
+const solving = () => useSeatingUi.getState().solving;
 
 const store = () => useProjectStore.getState();
 const isPrevious = () => useUiStore.getState().editingPrevious;
@@ -24,6 +28,7 @@ export function currentLocks(): Set<ID> {
 
 /** メンバーをドロップする。実行した操作の種類を返す（none = 何もしない / 不可） */
 export function dropMember(memberId: ID, target: DropTarget): DropOutcome["kind"] {
+  if (solving()) return "none";
   const assignment = currentAssignment();
   if (!canDrop(assignment, currentLocks(), memberId, target)) return "none";
   const outcome = applyDrop(assignment, memberId, target);
@@ -40,7 +45,7 @@ export function dropMember(memberId: ID, target: DropTarget): DropOutcome["kind"
 }
 
 export function setLocked(seatIds: ID[], locked: boolean) {
-  if (isPrevious() || !seatIds.length) return;
+  if (isPrevious() || !seatIds.length || solving()) return;
   store().setLocks(store().project.activePlanId, seatIds, locked);
 }
 
@@ -51,6 +56,7 @@ export function toggleLock(seatId: ID) {
 
 /** 全員を外す（今年度はロック席を残す） */
 export function unassignAll() {
+  if (solving()) return;
   if (isPrevious()) {
     const p = store().project;
     const prev = previousPlan(p);

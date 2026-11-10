@@ -61,7 +61,10 @@ export function ShuffleControls({ solver, plan }: { solver: SeatingSolver; plan:
         ? { kind: "unassignedOnly" }
         : { kind: "all" };
 
+  // 「選んだ部屋」で部屋が未選択のときは実行しない（全体に広げない）
+  const needsRooms = scope === "rooms" && selectedRoomIds.length === 0;
   const shuffle = (seed?: number) =>
+    !needsRooms &&
     void solver.run({ presets: presets.length ? presets : ["random"], scope: scopeValue(), seed });
 
   // Shift+S でシャッフル
@@ -93,7 +96,14 @@ export function ShuffleControls({ solver, plan }: { solver: SeatingSolver; plan:
           <Square className="size-3" />
         </Button>
       ) : (
-        <Button size="sm" onClick={() => shuffle()} data-testid="shuffle" className="shadow-sm">
+        <Button
+          size="sm"
+          onClick={() => shuffle()}
+          data-testid="shuffle"
+          className="shadow-sm"
+          disabled={needsRooms}
+          title={needsRooms ? t("shuffle.scope.pickRooms") : undefined}
+        >
           <Dices />
           {t("shuffle.button")}
         </Button>
@@ -181,7 +191,13 @@ export function ShuffleControls({ solver, plan }: { solver: SeatingSolver; plan:
       </Popover>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="ghost" className="text-xs" data-testid="locks-menu">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs"
+            data-testid="locks-menu"
+            disabled={running}
+          >
             <Lock className="size-3.5" />
             {plan.locks.length}
           </Button>
