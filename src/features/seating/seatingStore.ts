@@ -22,7 +22,8 @@ export interface SeatingUiState {
   /** 違反パネルのホバーで強調する人・席 */
   highlight: Highlight | null;
   /** ホバーカード */
-  hover: { memberId: ID; x: number; y: number } | null;
+  /** planId: ホバー元のキャンバスの案（比較表示で左右を区別する） */
+  hover: { memberId: ID; planId?: ID; x: number; y: number } | null;
   presets: PresetId[];
   compare: { on: boolean; otherPlanId: ID | null };
   /** ソルバー実行中（配置・ロックの編集を止める） */

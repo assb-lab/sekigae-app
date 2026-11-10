@@ -653,7 +653,7 @@ class Builder {
   }
 
   /**
-   * room.attrCap: 部屋ごとに同じ属性値の人数の上限（count = max、percent = max(1, ⌊max% × 在室人数⌋)）。
+   * room.attrCap: 部屋ごとに同じ属性値の人数の上限（count = max、percent = ⌊max% × 在室人数⌋）。
    * 違反 = Σ_部屋 Σ_値 超過人数。属性未設定（研究室なし・性別未回答）は数えない。
    */
   private roomAttrCap(rooms: number[], attr: Attr, max: number, unit: "count" | "percent"): Node {
@@ -671,7 +671,7 @@ class Builder {
         const v = values[m]!;
         if (v >= 0) cnt[v]!++;
       }
-      return unit === "count" ? max : Math.max(1, Math.floor((max / 100) * occ + 1e-9));
+      return unit === "count" ? max : Math.floor((max / 100) * occ + 1e-9);
     };
     return this.leaf({
       kind: "room",

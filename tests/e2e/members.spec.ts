@@ -302,6 +302,7 @@ test.describe("members", () => {
         roles[i % roles.length],
         "",
       ]);
+    wb.addWorksheet("空");
     const file = testInfo.outputPath("members.xlsx");
     await wb.xlsx.writeFile(file);
 
@@ -310,6 +311,16 @@ test.describe("members", () => {
     await page.getByTestId("import-file").setInputFiles(file);
     const dlg = page.getByTestId("import-dialog");
     await expect(dlg.getByTestId("import-header")).toBeChecked();
+    await expect(dlg.getByTestId("import-row")).toHaveCount(30);
+    // 空のシートに切り替えると前のシートの内容は取り込めない
+    await dlg.getByTestId("import-sheet").click();
+    await page.getByRole("option", { name: "空" }).click();
+    await expect(dlg.getByTestId("import-map-error")).toBeVisible();
+    await expect(dlg.getByTestId("import-row")).toHaveCount(0);
+    await expect(dlg.getByTestId("import-run")).toBeDisabled();
+    await dlg.getByTestId("import-sheet").click();
+    await page.getByRole("option", { name: "名簿" }).click();
+    await expect(dlg.getByTestId("import-map-error")).toBeHidden();
     await expect(dlg.getByTestId("import-row")).toHaveCount(30);
     await expect(dlg.getByText("新しく作成する研究室: 鈴木研究室, 山田研")).toBeVisible();
     await dlg.getByTestId("import-run").click();
