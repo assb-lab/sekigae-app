@@ -144,6 +144,9 @@ export function buildDomains(
   }
   /** m を席 s に固定（他の人は s を使えない） */
   const pinTo = (m: number, s: number, ruleId: string) => {
+    // ロック等で別の席に確定済みの人は、固定先の席を他の人から取り上げない
+    // （確定が優先され、固定ルールとの食い違いは評価で違反として報告される）
+    if (fixed[m]! >= 0 && fixed[m] !== s) return;
     addPin(m, s);
     const mask = one(s);
     const pinned = pinnedTo.get(s)!;

@@ -90,12 +90,16 @@ export function ruleDelta(
     hardDelta: 0,
     scoreDelta: score.after - score.before,
   };
-  for (const v of after) {
-    if (!v.ruleId) continue;
-    const prev = b.get(v.ruleId)?.violation ?? 0;
-    if (v.violation > prev) out.created.push(v.ruleId);
-    else if (v.violation < prev) out.resolved.push(v.ruleId);
-    if (v.strength === "hard") out.hardDelta += v.violation - prev;
+  const a = new Map<ID, Violation>();
+  for (const v of after) if (v.ruleId) a.set(v.ruleId, v);
+  // 違反がなくなったルールは after に現れないので、前後の和集合で比べる（なければ 0）
+  for (const id of new Set([...b.keys(), ...a.keys()])) {
+    const prev = b.get(id)?.violation ?? 0;
+    const next = a.get(id)?.violation ?? 0;
+    if (next > prev) out.created.push(id);
+    else if (next < prev) out.resolved.push(id);
+    const strength = (a.get(id) ?? b.get(id))!.strength;
+    if (strength === "hard") out.hardDelta += next - prev;
   }
   return out;
 }

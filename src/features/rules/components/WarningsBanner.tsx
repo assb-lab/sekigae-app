@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { batch, getProject, useProjectStore } from "@/store/project";
-import { stripDangling, type RulesAnalysis } from "../analysis";
+import { repairDangling, type RulesAnalysis } from "../analysis";
 import { useRT, useSummaryCtx } from "../hooks";
 import { useRulesUi } from "../rulesUi";
 import { memberName, seatLabel } from "../summary";
@@ -24,7 +24,7 @@ export function WarningsBanner({ analysis }: { analysis: RulesAnalysis }) {
     batch(() => {
       for (const id of danglingIds) {
         const r = p.rules.find((x) => x.id === id);
-        if (r) useProjectStore.getState().setRuleBlock(id, stripDangling(r.block, p));
+        if (r) useProjectStore.getState().updateRule(id, repairDangling(r, p));
       }
     });
     toast.success(t("warnings.fixed"));

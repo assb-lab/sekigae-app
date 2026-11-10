@@ -86,13 +86,25 @@ function baseFont(ctx: Ctx, extra: Partial<Font> = {}): Partial<Font> {
   return { ...ctx.font, ...extra };
 }
 
-/** 部屋を (row0, col0) を左上として描画 */
-function paintRoom(ws: Worksheet, ctx: Ctx, room: ExportRoom, row0: number, col0: number) {
+/**
+ * 部屋を (row0, col0) を左上として描画。
+ * paintVoid=false では部屋外（void）セルに触れない（フロア全体シートで、L 字の切り欠きに
+ * 重なる他の部屋のセルを上書きしないため）。
+ */
+function paintRoom(
+  ws: Worksheet,
+  ctx: Ctx,
+  room: ExportRoom,
+  row0: number,
+  col0: number,
+  opts: { paintVoid?: boolean } = {},
+) {
+  const paintVoid = opts.paintVoid ?? true;
   const { strings } = ctx.model;
   const seatById = new Map(room.seats.map((s) => [s.id, s]));
   for (const c of room.cells) {
     if (c.kind === "void") {
-      ws.getCell(row0 + c.y, col0 + c.x).fill = solid(VOID_FILL);
+      if (paintVoid) ws.getCell(row0 + c.y, col0 + c.x).fill = solid(VOID_FILL);
       continue;
     }
     const cell: Cell = ws.getCell(row0 + c.y, col0 + c.x);
@@ -239,7 +251,7 @@ function addFloorSheet(wb: Workbook, ctx: Ctx, used: Set<string>) {
     for (const c of r.cells)
       if (c.kind !== "void") occupied.add(`${r.floorX + c.x},${r.floorY + c.y}`);
   for (const r of model.rooms) {
-    paintRoom(ws, ctx, r, top + r.floorY, GRID_LEFT + r.floorX);
+    paintRoom(ws, ctx, r, top + r.floorY, GRID_LEFT + r.floorX, { paintVoid: false });
     if (!occupied.has(`${r.floorX},${r.floorY - 1}`)) {
       const c = ws.getCell(top + r.floorY - 1, GRID_LEFT + r.floorX);
       c.value = `${r.name} (${r.summary})`;

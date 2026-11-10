@@ -43,6 +43,8 @@ export function MiniRoomMap({
   const dragStart = useRef<{ x: number; y: number; additive: boolean; moved: boolean } | null>(
     null,
   );
+  /** 範囲選択を確定した直後の click（開始した席のトグル）を無視する */
+  const suppressClick = useRef(false);
 
   const box = useMemo(() => {
     if (!rooms.length) return { x: 0, y: 0, w: 1, h: 1 };
@@ -102,6 +104,8 @@ export function MiniRoomMap({
     const s = dragStart.current;
     dragStart.current = null;
     if (!s?.moved || !marquee) return setMarquee(null);
+    suppressClick.current = true;
+    setTimeout(() => (suppressClick.current = false), 0);
     const [x0, x1] = [Math.min(marquee.x0, marquee.x1), Math.max(marquee.x0, marquee.x1)];
     const [y0, y1] = [Math.min(marquee.y0, marquee.y1), Math.max(marquee.y0, marquee.y1)];
     const hit = seatCenters
@@ -217,6 +221,7 @@ export function MiniRoomMap({
                   onClick={(e) => {
                     if (!interactive) return;
                     e.stopPropagation();
+                    if (suppressClick.current) return;
                     toggle(s.id);
                   }}
                   onKeyDown={(e) => onSeatKey(e, s.id)}

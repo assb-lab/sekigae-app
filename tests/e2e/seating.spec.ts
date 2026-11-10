@@ -167,3 +167,33 @@ test("previous-year mode edits last year's plan", async ({ freshPage: page }) =>
   // 今年度の案は変わらない
   expect(Object.keys((await active(page)).assignment)).toHaveLength(0);
 });
+
+test("room scope with no rooms selected does not shuffle everything", async ({
+  freshPage: page,
+}) => {
+  await page.getByTestId("shuffle-scope").click();
+  await page.getByRole("menuitemradio", { name: /選んだ部屋|Selected rooms/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("shuffle")).toBeDisabled();
+});
+
+test("leaving one plan while comparing returns to the normal view", async ({ freshPage: page }) => {
+  await page.getByTestId("plan-menu").click();
+  await page.getByTestId("plan-duplicate").click();
+  await page.getByTestId("compare-toggle").click();
+  await expect(page.getByTestId("compare-view")).toBeVisible();
+  await page.evaluate(() => {
+    const g = globalThis as unknown as {
+      __sekigae: {
+        store: {
+          getState: () => { project: { activePlanId: string }; removePlan: (id: string) => void };
+        };
+      };
+    };
+    const st = g.__sekigae.store.getState();
+    st.removePlan(st.project.activePlanId);
+  });
+  await expect(page.getByTestId("compare-view")).toBeHidden();
+  await expect(page.getByTestId("shuffle")).toBeVisible();
+  await expect(page.getByTestId("compare-toggle")).toBeEnabled();
+});

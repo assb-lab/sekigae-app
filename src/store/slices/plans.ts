@@ -80,9 +80,19 @@ export function createPlansSlice(update: Update, _get: Get): PlansSlice {
     setPreviousPlan: (planId) =>
       update((d) => {
         d.previousPlanId = planId;
-        if (planId) {
-          const p = d.plans.find((x) => x.id === planId);
-          if (p) p.kind = "previous";
+        if (!planId) return;
+        const p = d.plans.find((x) => x.id === planId);
+        if (!p) return;
+        p.kind = "previous";
+        p.final = false;
+        // 今年度の案が 1 つも残らない／アクティブ案が昨年度になった場合は今年度の案を保つ
+        const current = d.plans.filter((x) => x.kind === "current");
+        if (!current.length) {
+          const fresh = createSeatPlan(p.name === "案A" ? "案B" : "案A");
+          d.plans.push(fresh);
+          d.activePlanId = fresh.id;
+        } else if (d.activePlanId === planId) {
+          d.activePlanId = current[0]!.id;
         }
       }),
     assignSeat: (planId, seatId, memberId) =>
