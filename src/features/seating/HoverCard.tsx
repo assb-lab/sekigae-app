@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { ID } from "@/domain/schema";
-import type { PlanEvaluation } from "@/engine";
+import { evaluatePlan, type PlanEvaluation } from "@/engine";
 import { LabBadge, RoleBadge } from "@/features/members/components/badges";
 import { prevPlacementOf } from "@/features/members/lib/prevPlan";
 import { ruleRelatesToMember } from "@/features/rules/analysis";
@@ -31,12 +31,23 @@ export function HoverCard({
     if (!hover) return null;
     const m = members.get(hover.memberId);
     if (!m) return null;
+    // 比較表示の右側など、作業中でない案のチップならその案の割当・評価を使う
+    const other =
+      hover.planId && hover.planId !== project.activePlanId
+        ? project.plans.find((p) => p.id === hover.planId)
+        : undefined;
+    const asg = other ? other.assignment : assignment;
+    const ev = other
+      ? other.kind === "current"
+        ? evaluatePlan(project, other.id)
+        : null
+      : evaluation;
     const idx = seatIndex(project.layout.rooms);
-    const seatId = Object.entries(assignment).find(([, mid]) => mid === m.id)?.[0];
+    const seatId = Object.entries(asg).find(([, mid]) => mid === m.id)?.[0];
     const here = seatId ? idx.get(seatId) : undefined;
     const prev = prevPlacementOf(project, m.id);
     const violated = new Set(
-      (evaluation?.violations ?? [])
+      (ev?.violations ?? [])
         .filter((v) => v.ruleId && v.memberIds.includes(m.id))
         .map((v) => v.ruleId!),
     );

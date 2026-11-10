@@ -197,3 +197,74 @@ test("leaving one plan while comparing returns to the normal view", async ({ fre
   await expect(page.getByTestId("shuffle")).toBeVisible();
   await expect(page.getByTestId("compare-toggle")).toBeEnabled();
 });
+
+test("dragging one member while another is picked moves only the dragged pair", async ({
+  freshPage: page,
+}) => {
+  await arrange(page);
+  const chips = page.getByTestId("seating-canvas").getByTestId("member-chip");
+  const info = async (i: number) => ({
+    member: (await chips.nth(i).getAttribute("data-member-id"))!,
+    seat: (await chips.nth(i).getAttribute("data-seat"))!,
+  });
+  const [a, b, c] = [await info(0), await info(1), await info(2)];
+  // a を選択した状態で b を c の席へドラッグ
+  await chips.nth(0).click();
+  await dragTo(
+    page,
+    await center(page, `[data-testid="member-chip"][data-member-id="${b.member}"]`),
+    () => center(page, `[data-seat-id="${c.seat}"] .sk-desk`),
+  );
+  await expect.poll(async () => (await active(page)).assignment[c.seat]).toBe(b.member);
+  const after = (await active(page)).assignment;
+  expect(after[b.seat]).toBe(c.member);
+  expect(after[a.seat]).toBe(a.member);
+});
+
+test("hover card in compare view shows the hovered plan's seat", async ({ freshPage: page }) => {
+  await arrange(page);
+  await page.getByTestId("plan-menu").click();
+  await page.getByTestId("plan-duplicate").click();
+  await page.getByTestId("shuffle").click();
+  await expect(page.getByTestId("shuffle")).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("compare-toggle").click();
+  await expect(page.getByTestId("compare-view")).toBeVisible();
+  await settle(page);
+
+  const left = page.getByTestId("compare-canvas-0").getByTestId("member-chip");
+  const right = page.getByTestId("compare-canvas-1").getByTestId("member-chip");
+  // 2 案で席が違う人を探す
+  let member = "";
+  let rightSeat = "";
+  for (let i = 0; i < (await right.count()); i++) {
+    const m = (await right.nth(i).getAttribute("data-member-id"))!;
+    const s = (await right.nth(i).getAttribute("data-seat"))!;
+    const l = await left.and(page.locator(`[data-member-id="${m}"]`)).getAttribute("data-seat");
+    if (l !== s) {
+      member = m;
+      rightSeat = s;
+      break;
+    }
+  }
+  expect(member).not.toBe("");
+  const label = await page.evaluate((seatId) => {
+    const g = globalThis as unknown as {
+      __sekigae: {
+        store: {
+          getState: () => {
+            project: {
+              layout: { rooms: { name: string; seats: { id: string; label: string }[] }[] };
+            };
+          };
+        };
+      };
+    };
+    for (const r of g.__sekigae.store.getState().project.layout.rooms) {
+      const s = r.seats.find((x) => x.id === seatId);
+      if (s) return `${r.name} ${s.label}`;
+    }
+    return "";
+  }, rightSeat);
+  await right.and(page.locator(`[data-member-id="${member}"]`)).hover();
+  await expect(page.getByTestId("member-hover-card")).toContainText(label);
+});
