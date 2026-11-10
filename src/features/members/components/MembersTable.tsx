@@ -26,6 +26,7 @@ import { normalizeName, parseTags } from "../lib/normalize";
 import { prevSeatActions } from "../lib/prevPlan";
 import type { ColumnKey, MemberRow, SortKey, SortState } from "../lib/table";
 import { ChangeBadge, LabBadge, PrevPlacementText, RoleBadge } from "./badges";
+import { MemberContextMenu } from "./MemberContextMenu";
 import { PrevSeatEditor } from "./PrevSeatEditor";
 import { NativeRoleOptions } from "./RoleSelect";
 
@@ -370,31 +371,33 @@ export function MembersTable(props: MembersTableProps) {
           <th className="w-10 border-b" />
         </tr>
       </thead>
-      <tbody ref={bodyRef} onKeyDown={onKeyDown}>
-        {rows.map((r) => (
-          <MemberRowView
-            key={r.member.id}
-            row={r}
-            columns={columns}
-            labs={props.labs}
-            readOnly={readOnly}
-            selected={selected.has(r.member.id)}
-            activeCol={active?.row === r.member.id ? active.col : null}
-            editing={active?.row === r.member.id ? editing : null}
-            prevOpen={prevOpen === r.member.id}
-            onActivate={activate}
-            registerEditor={registerEditor}
-            onStartEdit={startEdit}
-            onFinishEdit={finishEdit}
-            onPrevOpenChange={(open) => {
-              setPrevOpen(open ? r.member.id : null);
-              if (!open) go({ row: r.member.id, col: "prev" });
-            }}
-            onToggleSelect={props.onToggleSelect}
-            onOpenEdit={props.onOpenEdit}
-          />
-        ))}
-      </tbody>
+      <MemberContextMenu disabled={readOnly}>
+        <tbody ref={bodyRef} onKeyDown={onKeyDown}>
+          {rows.map((r) => (
+            <MemberRowView
+              key={r.member.id}
+              row={r}
+              columns={columns}
+              labs={props.labs}
+              readOnly={readOnly}
+              selected={selected.has(r.member.id)}
+              activeCol={active?.row === r.member.id ? active.col : null}
+              editing={active?.row === r.member.id ? editing : null}
+              prevOpen={prevOpen === r.member.id}
+              onActivate={activate}
+              registerEditor={registerEditor}
+              onStartEdit={startEdit}
+              onFinishEdit={finishEdit}
+              onPrevOpenChange={(open) => {
+                setPrevOpen(open ? r.member.id : null);
+                if (!open) go({ row: r.member.id, col: "prev" });
+              }}
+              onToggleSelect={props.onToggleSelect}
+              onOpenEdit={props.onOpenEdit}
+            />
+          ))}
+        </tbody>
+      </MemberContextMenu>
     </table>
   );
 }

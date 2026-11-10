@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/PageHeader";
+import { CanvasContextMenu } from "./canvas/CanvasContextMenu";
 import { EditorCanvas } from "./canvas/EditorCanvas";
 import { useEditor } from "./editorStore";
 import { Inspector } from "./panels/Inspector";
@@ -25,9 +26,11 @@ export default function RoomsPage() {
         <div className="hidden md:flex">
           <RoomListPanel />
         </div>
-        <div className="relative min-w-0 flex-1" data-tour="room-canvas">
-          <EditorCanvas />
-        </div>
+        <CanvasContextMenu>
+          <div className="relative min-w-0 flex-1" data-tour="room-canvas">
+            <EditorCanvas />
+          </div>
+        </CanvasContextMenu>
         <div className="hidden lg:flex">
           <Inspector />
         </div>
