@@ -283,6 +283,8 @@ export function SeatingCanvas({
             initialFit={initialFit}
             cursor={picked ? "copy" : undefined}
             onPointerUp={(e) => {
+              // チップのドラッグ・クリックは beginDrag 側が処理する（同じ操作で 2 回動かさない）
+              if (useDragStore.getState().drag) return;
               const hit = nearestSeat(visibleRooms, e.x, e.y);
               if (!interactive) {
                 if (hit) onSeatClick?.(hit.seat.id);
@@ -329,7 +331,12 @@ export function SeatingCanvas({
                   }}
                   onChipEnter={(e, memberId) => {
                     if (useDragStore.getState().drag) return;
-                    useSeatingUi.getState().setHover({ memberId, x: e.clientX, y: e.clientY });
+                    useSeatingUi.getState().setHover({
+                      memberId,
+                      planId: plan.id,
+                      x: e.clientX,
+                      y: e.clientY,
+                    });
                   }}
                   onChipLeave={() => useSeatingUi.getState().setHover(null)}
                 />

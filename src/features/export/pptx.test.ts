@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import { describe, expect, it } from "vite-plus/test";
 import { makeExportFixture } from "./fixture";
 import { buildExportModel, EXPORT_COLUMNS, type ExportOptions } from "./model";
-import { exportPptx, fitFontSize } from "./pptx";
+import { exportPptx, fitFontSize, paginateComposition } from "./pptx";
 import { nameLines, textEm } from "./text";
 
 const DATE = new Date(2026, 3, 1);
@@ -34,6 +34,27 @@ describe("text fitting", () => {
     expect(fitFontSize("とても長い名前とても長い名前", 0.3, 0.3, 14)).toBe(5);
     expect(nameLines("山田 太郎", 40, 40, 14).lines).toEqual(["山田", "太郎"]);
     expect(nameLines("Al", 40, 40, 14).lines).toEqual(["Al"]);
+  });
+});
+
+describe("paginateComposition", () => {
+  it("keeps a short table on one slide", () => {
+    expect(paginateComposition(3, { hasNote: true })).toEqual([[0, 1, 2]]);
+  });
+
+  it("splits many rooms across slides so every row fits above the footer", () => {
+    const pages = paginateComposition(30, { hasNote: true });
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flat()).toEqual(Array.from({ length: 30 }, (_, i) => i));
+    const top = 1.15;
+    const bottom = 5.625 - 0.4;
+    pages.forEach((rows, i) => {
+      const last = i === pages.length - 1;
+      expect(rows.length).toBeGreaterThan(0);
+      // 見出し + 本文 (+ 合計行と未配置欄)
+      const h = (1 + rows.length + (last ? 1 : 0)) * 0.3 + (last ? 0.7 : 0);
+      expect(top + h).toBeLessThanOrEqual(bottom);
+    });
   });
 });
 
