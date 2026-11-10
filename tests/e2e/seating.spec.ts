@@ -268,3 +268,35 @@ test("hover card in compare view shows the hovered plan's seat", async ({ freshP
   await right.and(page.locator(`[data-member-id="${member}"]`)).hover();
   await expect(page.getByTestId("member-hover-card")).toContainText(label);
 });
+
+test("dropping over a hidden room does not seat anyone there", async ({ freshPage: page }) => {
+  // 2 つ目の部屋の席の位置を覚えてから、その部屋を隠す
+  const target = await page.evaluate(() => {
+    const g = globalThis as unknown as {
+      __sekigae: {
+        store: {
+          getState: () => {
+            project: { layout: { rooms: { id: string; seats: { id: string }[] }[] } };
+          };
+        };
+      };
+    };
+    const r = g.__sekigae.store.getState().project.layout.rooms[1]!;
+    return { roomId: r.id, seatId: r.seats[0]!.id };
+  });
+  const point = await center(page, `[data-seat-id="${target.seatId}"] .sk-desk`);
+  await page.evaluate((roomId) => {
+    const g = globalThis as unknown as {
+      __sekigae: {
+        store: {
+          getState: () => { updateRoom: (id: string, patch: { hidden: boolean }) => void };
+        };
+      };
+    };
+    g.__sekigae.store.getState().updateRoom(roomId, { hidden: true });
+  }, target.roomId);
+  await expect(page.locator(`[data-seat-id="${target.seatId}"]`)).toHaveCount(0);
+  await dragTo(page, await center(page, '[data-testid="tray-member"]'), point);
+  await page.waitForTimeout(200);
+  expect((await active(page)).assignment[target.seatId]).toBeUndefined();
+});

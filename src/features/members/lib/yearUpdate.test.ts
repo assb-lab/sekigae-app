@@ -150,6 +150,27 @@ describe("runYearUpdate", () => {
     expect(previousPlan(s().project)!.name).toBe("Y2");
   });
 
+  it("re-enables a disabled working-doctor seat rule instead of treating it as present", () => {
+    const opts = {
+      sourcePlanId: s().project.activePlanId,
+      previousName: "Y1",
+      existingPrevious: "overwrite" as const,
+      currentAssignment: "keep" as const,
+      promotion: { roleChanges: [], graduates: [] },
+      removeMembers: [],
+      carryOverWorkingDoctors: true,
+    };
+    runYearUpdate(opts);
+    const rule = s().project.rules[0]!;
+    s().updateRule(rule.id, { enabled: false });
+    expect(hasWorkingDoctorSeatRule(s().project.rules)).toBe(false);
+    const r2 = runYearUpdate({ ...opts, previousName: "Y2" });
+    expect(r2).toMatchObject({ ruleAdded: false, ruleEnabled: true });
+    expect(s().project.rules).toHaveLength(1);
+    expect(s().project.rules[0]!.enabled).toBe(true);
+    expect(hasWorkingDoctorSeatRule(s().project.rules)).toBe(true);
+  });
+
   it("archive keeps the old previous plan", () => {
     const base = {
       sourcePlanId: s().project.activePlanId,
