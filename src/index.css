@@ -178,6 +178,8 @@
 }
 .sk-chip {
   cursor: grab;
+}
+
 /* ガイドツアー (driver.js) のテーマ */
 .driver-popover.sekigae-tour {
   background: var(--popover);

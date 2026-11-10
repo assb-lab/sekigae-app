@@ -3,6 +3,7 @@
  * keys は表示用（"Mod" は ⌘ / Ctrl に置換）。label は i18n キー（ns:key 形式）。
  */
 import { ROOM_SHORTCUTS } from "@/features/rooms/shortcuts";
+import { SEATING_SHORTCUTS } from "@/features/seating/shortcuts";
 
 export interface ShortcutDef {
   keys: string[];
@@ -58,5 +59,9 @@ function fromDefs(
 }
 
 export function getShortcutGroups(): ShortcutGroup[] {
-  return [GLOBAL_SHORTCUTS, fromDefs("rooms:title", "rooms", ROOM_SHORTCUTS)];
+  return [
+    GLOBAL_SHORTCUTS,
+    fromDefs("rooms:title", "rooms", ROOM_SHORTCUTS),
+    fromDefs("seating:title", "seating", SEATING_SHORTCUTS),
+  ];
 }
