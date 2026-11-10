@@ -555,30 +555,58 @@ function addRoomSlide(ctx: Ctx, room: ExportRoom) {
   addFooter(s, ctx);
 }
 
+/** 構成表の行の高さ（inch） */
+const COMPOSITION_ROW_H = 0.3;
+/** 未配置メンバーの欄の高さ（inch） */
+const COMPOSITION_NOTE_H = 0.7;
+
+/**
+ * 構成表の本文行（部屋）をスライドごとに分ける。各スライドに見出し行、最後のスライドに合計行が入る。
+ * 未配置メンバーの欄は最後のスライドにだけ置くので、その分は最後のページだけ詰める。
+ */
+export function paginateComposition(
+  rowCount: number,
+  opts: { hasNote: boolean; rowH?: number },
+): number[][] {
+  const rowH = opts.rowH ?? COMPOSITION_ROW_H;
+  const top = AREA_TOP + 0.1;
+  const bottom = SLIDE_H - FOOTER_H - 0.1;
+  const fit = (reserve: number) =>
+    Math.max(1, Math.floor((bottom - top - reserve) / rowH + 1e-6) - 1); // 見出し行を除く
+  const perPage = fit(0);
+  // 最後のスライドは合計行（＋未配置欄）を差し引く
+  const lastCap = Math.max(1, fit(rowH + (opts.hasNote ? COMPOSITION_NOTE_H : 0)));
+  const pages: number[][] = [];
+  let i = 0;
+  while (rowCount - i > lastCap) {
+    const n = Math.min(perPage, rowCount - i - 1); // 最後のページに 1 行以上残す
+    pages.push(Array.from({ length: n }, (_, k) => i + k));
+    i += n;
+  }
+  pages.push(Array.from({ length: rowCount - i }, (_, k) => i + k));
+  return pages;
+}
+
 function addCompositionSlide(ctx: Ctx) {
   const { model, pptx } = ctx;
   if (!model.rooms.length) return;
-  const s = pptx.addSlide();
-  addTitle(s, ctx, model.strings.composition, model.strings.plan);
   const roles = model.compositionRoles;
   const headerCell = (text: string, fill = "E2E8F0", color = INK): PptxGenJS.TableCell => ({
     text,
     options: { bold: true, fill: { color: fill }, color, align: "center" },
   });
-  const rows: PptxGenJS.TableRow[] = [
-    [
-      headerCell(model.strings.headers.room),
-      ...roles.map((r) => {
-        const c = ROLE_COLORS[r].light;
-        return headerCell(model.strings.roles[r], hex(c), hex(readableText(c)));
-      }),
-      headerCell(model.strings.total),
-      headerCell(model.strings.seats),
-    ],
+  const header: PptxGenJS.TableRow = [
+    headerCell(model.strings.headers.room),
+    ...roles.map((r) => {
+      const c = ROLE_COLORS[r].light;
+      return headerCell(model.strings.roles[r], hex(c), hex(readableText(c)));
+    }),
+    headerCell(model.strings.total),
+    headerCell(model.strings.seats),
   ];
-  for (const room of model.rooms) {
+  const body: PptxGenJS.TableRow[] = model.rooms.map((room) => {
     const counts = new Map(room.roleBreakdown.map((b) => [b.role, b.count]));
-    rows.push([
+    return [
       { text: room.name, options: { bold: true } },
       ...roles.map((r) => ({
         text: String(counts.get(r) ?? ""),
@@ -586,9 +614,9 @@ function addCompositionSlide(ctx: Ctx) {
       })),
       { text: String(room.members.length), options: { align: "center", bold: true } },
       { text: String(room.seatCount), options: { align: "center", color: MUTED } },
-    ]);
-  }
-  rows.push([
+    ];
+  });
+  const totals: PptxGenJS.TableRow = [
     headerCell(model.strings.total),
     ...roles.map((r) =>
       headerCell(
@@ -602,38 +630,51 @@ function addCompositionSlide(ctx: Ctx) {
     ),
     headerCell(String(model.rooms.reduce((n, r) => n + r.members.length, 0))),
     headerCell(String(model.totals.seats)),
-  ]);
+  ];
   const w = SLIDE_W - MARGIN * 2;
   const first = Math.min(2, w * 0.25);
   const rest = (w - first) / (roles.length + 2);
-  s.addTable(rows, {
-    x: MARGIN,
-    y: AREA_TOP + 0.1,
-    w,
-    colW: [first, ...Array.from({ length: roles.length + 2 }, () => rest)],
-    fontFace: ctx.font,
-    fontSize: roles.length > 10 ? 9 : 11,
-    color: INK,
-    border: { type: "solid", pt: 0.5, color: "CBD5E1" },
-    valign: "middle",
-    autoPage: false,
+  const hasNote = model.unassigned.length > 0;
+  const pages = paginateComposition(body.length, { hasNote });
+  pages.forEach((idx, p) => {
+    const last = p === pages.length - 1;
+    const s = pptx.addSlide();
+    const title =
+      pages.length > 1
+        ? `${model.strings.composition} (${p + 1}/${pages.length})`
+        : model.strings.composition;
+    addTitle(s, ctx, title, model.strings.plan);
+    const rows = [header, ...idx.map((i) => body[i]!), ...(last ? [totals] : [])];
+    s.addTable(rows, {
+      x: MARGIN,
+      y: AREA_TOP + 0.1,
+      w,
+      colW: [first, ...Array.from({ length: roles.length + 2 }, () => rest)],
+      rowH: COMPOSITION_ROW_H,
+      fontFace: ctx.font,
+      fontSize: roles.length > 10 ? 9 : 11,
+      color: INK,
+      border: { type: "solid", pt: 0.5, color: "CBD5E1" },
+      valign: "middle",
+      autoPage: false,
+    });
+    if (last && hasNote)
+      s.addText(
+        `${model.strings.unassignedTitle}: ${model.unassigned.map((p) => p.name).join("、")}`,
+        {
+          x: MARGIN,
+          y: SLIDE_H - FOOTER_H - COMPOSITION_NOTE_H - 0.1,
+          w: SLIDE_W - MARGIN * 2,
+          h: COMPOSITION_NOTE_H - 0.1,
+          fontSize: 10,
+          color: "B45309",
+          fontFace: ctx.font,
+          fit: "shrink",
+          valign: "bottom",
+        },
+      );
+    addFooter(s, ctx);
   });
-  if (model.unassigned.length)
-    s.addText(
-      `${model.strings.unassignedTitle}: ${model.unassigned.map((p) => p.name).join("、")}`,
-      {
-        x: MARGIN,
-        y: SLIDE_H - FOOTER_H - 0.7,
-        w: SLIDE_W - MARGIN * 2,
-        h: 0.6,
-        fontSize: 10,
-        color: "B45309",
-        fontFace: ctx.font,
-        fit: "shrink",
-        valign: "bottom",
-      },
-    );
-  addFooter(s, ctx);
 }
 
 /** モデルから PPTX のバイト列を生成する */
