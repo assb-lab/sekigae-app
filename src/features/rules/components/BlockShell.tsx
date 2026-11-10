@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Strength, Weight } from "@/domain/rules";
+import { HelpTip } from "@/components/HelpTip";
 import { cn } from "@/lib/utils";
 import { useRT } from "../hooks";
 import type { BlockDefinition } from "../registry";
@@ -223,6 +224,7 @@ export function BlockShell({
               hardAllowed={def.hardAllowed}
             />
           )}
+          {!child && onStrengthChange && <HelpTip term="strength" />}
           {!child && strength === "soft" && onWeightChange && (
             <WeightDots value={weight} onChange={onWeightChange} />
           )}

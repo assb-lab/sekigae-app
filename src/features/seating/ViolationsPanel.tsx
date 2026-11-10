@@ -54,7 +54,9 @@ export function ViolationsPanel({
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-xs font-medium",
-            hard ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground",
+            hard
+              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200"
+              : "bg-muted text-muted-foreground",
           )}
           data-testid="hard-count"
         >

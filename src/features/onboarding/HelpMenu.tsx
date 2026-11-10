@@ -18,7 +18,7 @@ import { useOnboardingUi } from "./onboardingStore";
 import { startTour } from "./tour";
 import { MAIN_TOUR, PAGE_TOURS } from "./tourSteps";
 
-export const APP_VERSION = "1.0.0";
+const APP_VERSION = __APP_VERSION__;
 
 export function HelpMenu() {
   const { t } = useTranslation("onboarding");

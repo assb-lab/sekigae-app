@@ -224,5 +224,32 @@
       "startEmpty": "Start with an empty project",
       "details": "Details"
     }
+  },
+  "glossary": {
+    "ariaLabel": "About “{{term}}”",
+    "strength": {
+      "title": "Required / Preferred",
+      "body": "Required rules must always hold; if they can't, the reason is shown. Preferred rules are kept where possible and cost points by their weight when broken."
+    },
+    "weight": {
+      "title": "Weight",
+      "body": "How important a preferred rule is (1–5). Higher weights are honored first."
+    },
+    "depth": {
+      "title": "Depth",
+      "body": "Walking distance from the entrance. Farther seats are “at the back”. The heatmap shows it in color."
+    },
+    "seed": {
+      "title": "Seed",
+      "body": "The random seed of a shuffle. The same seed with the same setup reproduces the same arrangement."
+    },
+    "lock": {
+      "title": "Lock",
+      "body": "People in locked seats stay put when you reshuffle. Use it to keep seats you decided by hand."
+    },
+    "condition": {
+      "title": "And / or / not",
+      "body": "Combine conditions such as “D or M2” to select people or seats. “Not” inverts a condition."
+    }
   }
 }
