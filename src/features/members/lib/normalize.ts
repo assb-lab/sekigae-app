@@ -255,8 +255,9 @@ export function matchLab(raw: string, labs: readonly Lab[]): Lab | undefined {
 /** タグ文字列を分割（カンマ・読点・セミコロン・改行区切り） */
 export function parseTags(raw: string | null | undefined): string[] {
   const out: string[] = [];
-  for (const part of normalizeWidth(raw ?? "").split(/[,、;；\n|｜]+/u)) {
-    const t = part.trim();
+  // 改行も区切りとして扱うため、空白の正規化より先に分割する
+  for (const part of (raw ?? "").split(/[,、;；\r\n|｜，]+/u)) {
+    const t = normalizeWidth(part).trim();
     if (t && !out.includes(t)) out.push(t);
   }
   return out;
