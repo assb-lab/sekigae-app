@@ -4,7 +4,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { memo, useMemo } from "react";
 import type { ID, Lab, Member, Room } from "@/domain/schema";
-import { seatPosIndex } from "./lib/hit";
+import { seatAnchor, seatPosIndex } from "./lib/hit";
 import { MemberChip } from "./MemberChip";
 
 export interface ChipView {
@@ -59,7 +59,7 @@ export const ChipsLayer = memo(function ChipsLayer({
   return (
     <g data-layer="chips">
       {entries.map(([seatId, memberId]) => {
-        const p = pos.get(seatId)!;
+        const p = seatAnchor(pos.get(seatId)!);
         const m = members.get(memberId)!;
         const v = view(m, seatId);
         return (

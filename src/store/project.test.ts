@@ -105,4 +105,23 @@ describe("project store", () => {
     ).toEqual([]);
     expect(s().addSeats(roomId, [{ x: 1, y: 1 }])).toHaveLength(1);
   });
+
+  it("adds wide desks only where the whole footprint fits and normalizes span", () => {
+    const roomId = s().addRoom({ name: "A", width: 4, height: 2 });
+    const [boss] = s().addSeats(roomId, [{ x: 0, y: 0, facing: "s", span: 3 }]);
+    expect(boss).toBeDefined();
+    // 机の上（(2,0)）や、はみ出す位置には置けない
+    expect(s().addSeats(roomId, [{ x: 2, y: 0 }])).toEqual([]);
+    expect(s().addSeats(roomId, [{ x: 2, y: 1, span: 3 }])).toEqual([]);
+    expect(s().addSeats(roomId, [{ x: 3, y: 0 }])).toHaveLength(1);
+    const room = () => s().project.layout.rooms.find((r) => r.id === roomId)!;
+    expect(room().seats.find((x) => x.id === boss)!.span).toBe(3);
+    // 幅 1 に戻すとフィールドごと消える
+    s().updateSeats(roomId, [boss!], { span: 1 });
+    expect("span" in room().seats.find((x) => x.id === boss)!).toBe(false);
+    // 机の一部を障害物で塗ると席ごと消える
+    s().updateSeats(roomId, [boss!], { span: 2 });
+    s().paintCells(roomId, [{ x: 1, y: 0 }], "obstacle");
+    expect(room().seats.some((x) => x.id === boss)).toBe(false);
+  });
 });

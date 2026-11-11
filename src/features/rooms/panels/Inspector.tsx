@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { MAX_SEAT_SPAN, seatSpan } from "@/domain/geometry/seat";
 import type { Facing, ID, Room, Seat } from "@/domain/schema";
 import { cn } from "@/lib/utils";
 import { batch, useProjectStore } from "@/store/project";
@@ -34,6 +35,7 @@ import {
   resizeWithConfirm,
   selectRoom,
   setSeatsFacing,
+  setSeatsSpan,
 } from "../actions";
 import { useEditor } from "../editorStore";
 import { duplicateLabels, overlappingRoomIds, type NumberingOrder } from "../lib/editing";
@@ -314,6 +316,50 @@ function FacingPicker({
   );
 }
 
+const SPANS = Array.from({ length: MAX_SEAT_SPAN }, (_, i) => i + 1);
+
+/** 机の幅（1×1 / 1×2 / 1×3 …）。2 以上は横長の机（部長席など） */
+export function SpanPicker({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (n: number) => void;
+}) {
+  const { t } = useTranslation("rooms");
+  return (
+    <div
+      className="grid gap-1"
+      style={{ gridTemplateColumns: `repeat(${SPANS.length}, minmax(0, 1fr))` }}
+      role="radiogroup"
+      aria-label={t("inspector.span")}
+    >
+      {SPANS.map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={t("inspector.spanOption", { count: n })}
+          data-testid={`span-${n}`}
+          onClick={() => onChange(n)}
+          className={cn(
+            "flex h-8 items-center justify-center gap-1 rounded-md border text-xs tabular-nums transition-colors",
+            value === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+          )}
+        >
+          <span
+            aria-hidden
+            className="inline-block h-2 rounded-[2px] border border-current opacity-80"
+            style={{ width: `${n * 5}px` }}
+          />
+          1×{n}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SeatInspector({ room, seat }: { room: Room; seat: Seat }) {
   const { t } = useTranslation("rooms");
   const rooms = useRooms();
@@ -361,10 +407,13 @@ function SeatInspector({ room, seat }: { room: Room; seat: Seat }) {
         />
       </Field>
       <Field label={t("inspector.facing")}>
-        <FacingPicker
-          value={seat.facing}
-          onChange={(facing) => updateSeats(room.id, [seat.id], { facing })}
-        />
+        <FacingPicker value={seat.facing} onChange={setSeatsFacing} />
+      </Field>
+      <Field
+        label={t("inspector.span")}
+        hint={<p className="text-muted-foreground text-[11px]">{t("inspector.spanHint")}</p>}
+      >
+        <SpanPicker value={seatSpan(seat)} onChange={setSeatsSpan} />
       </Field>
       <Field label={t("inspector.tags")}>
         <TagEditor
@@ -388,6 +437,7 @@ function MultiSeatInspector({ refs }: { refs: { room: Room; seat: Seat }[] }) {
   const updateSeats = useProjectStore((s) => s.updateSeats);
   const suggestions = useTagSuggestions();
   const facings = new Set(refs.map((r) => r.seat.facing));
+  const spans = new Set(refs.map((r) => seatSpan(r.seat)));
   const common =
     refs.reduce<string[] | null>(
       (acc, r) => (acc === null ? [...r.seat.tags] : acc.filter((x) => r.seat.tags.includes(x))),
@@ -427,6 +477,9 @@ function MultiSeatInspector({ refs }: { refs: { room: Room; seat: Seat }[] }) {
           value={facings.size === 1 ? [...facings][0]! : null}
           onChange={setSeatsFacing}
         />
+      </Field>
+      <Field label={t("inspector.span")}>
+        <SpanPicker value={spans.size === 1 ? [...spans][0]! : null} onChange={setSeatsSpan} />
       </Field>
       <Field label={t("inspector.tags")}>
         <TagEditor

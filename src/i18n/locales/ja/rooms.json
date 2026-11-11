@@ -78,7 +78,9 @@
     "copiedRoom": "「{{name}}」をコピーしました",
     "placeOutside": "部屋の中に配置してください",
     "nothingPlaced": "ここには配置できません",
-    "partiallyPlaced": "{{total}} 席中 {{placed}} 席を配置しました（置けない位置を除外）"
+    "partiallyPlaced": "{{total}} 席中 {{placed}} 席を配置しました（置けない位置を除外）",
+    "reshapeBlocked_one": "{{count}} 席は壁・障害物・他の席にぶつかるため変更しませんでした",
+    "reshapeBlocked_other": "{{count}} 席は壁・障害物・他の席にぶつかるため変更しませんでした"
   },
   "tools": {
     "label": "ツール",
@@ -91,6 +93,8 @@
     "eraser": "消しゴム",
     "pan": "手のひら（移動）",
     "facing": "新しい席の向き: {{dir}}",
+    "span_one": "新しい席の幅: 1×{{count}}",
+    "span_other": "新しい席の幅: 1×{{count}}",
     "hint": {
       "select": "クリックで選択、ドラッグで移動・範囲選択",
       "floor": "床に戻す。Shift+ドラッグで矩形",
@@ -99,7 +103,8 @@
       "seat": "クリックで席を置く / 外す。ドラッグで連続配置",
       "entrance": "部屋の外周の辺に入口を置く",
       "eraser": "席・入口・障害物を消す",
-      "pan": "ドラッグで表示を移動"
+      "pan": "ドラッグで表示を移動",
+      "span": "クリックで切り替え（1×1 / 1×2 / 1×3 / 1×4）。2 以上は部長席などの横長の机"
     }
   },
   "hint": {
@@ -134,8 +139,10 @@
       "island2x2": "島型 2×2",
       "island2x3": "島型 2×3",
       "island2x4": "島型 2×4",
+      "islandHead": "島型 + 部長席",
       "wallRow": "壁沿い一列",
-      "classroom": "教室型"
+      "classroom": "教室型",
+      "managerDesk": "部長席 1×3"
     },
     "room": {
       "empty": "空の部屋",
@@ -177,6 +184,10 @@
     "seat": "席",
     "label": "ラベル",
     "facing": "向き",
+    "span": "机の幅",
+    "spanHint": "横長の机（部長席など）。座る人から見て左右に伸び、1 人分の席として扱います",
+    "spanOption_one": "幅 1×{{count}}",
+    "spanOption_other": "幅 1×{{count}}",
     "tags": "タグ",
     "addTag": "タグを追加",
     "removeTag": "タグ「{{tag}}」を外す",

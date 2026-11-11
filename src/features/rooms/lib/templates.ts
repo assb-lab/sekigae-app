@@ -1,16 +1,27 @@
-/** 席テンプレート（島型・壁沿い・教室型）と部屋テンプレート（小・中・大） */
+/** 席テンプレート（島型・壁沿い・教室型・部長席）と部屋テンプレート（小・中・大） */
+import { seatSize, seatSpan } from "@/domain/geometry/seat";
 import type { CellKind, Entrance, Facing, Seat } from "@/domain/schema";
 import { rotateFacing } from "./editing";
 
 export interface PlacementItem {
+  /** フットプリント左上の相対位置 */
   dx: number;
   dy: number;
   facing: Facing;
+  /** 横長の机の幅（セル数、既定 1） */
+  span?: number;
   label?: string;
   tags?: string[];
 }
 
-export type SeatTemplateId = "island2x2" | "island2x3" | "island2x4" | "wallRow" | "classroom";
+export type SeatTemplateId =
+  | "island2x2"
+  | "island2x3"
+  | "island2x4"
+  | "islandHead"
+  | "wallRow"
+  | "classroom"
+  | "managerDesk";
 
 /** 向かい合う 2 列 × n 席の島 */
 function island(n: number): PlacementItem[] {
@@ -27,6 +38,14 @@ export const SEAT_TEMPLATES: { id: SeatTemplateId; items: PlacementItem[] }[] = 
   { id: "island2x3", items: island(3) },
   { id: "island2x4", items: island(4) },
   {
+    // 島の端に横長の机（お誕生日席）。島の方を向く 1×2 の机
+    id: "islandHead",
+    items: [
+      { dx: 0, dy: 0, facing: "e", span: 2 },
+      ...island(3).map((i) => ({ ...i, dx: i.dx + 1 })),
+    ],
+  },
+  {
     id: "wallRow",
     items: Array.from({ length: 6 }, (_, i) => ({ dx: i, dy: 0, facing: "n" as const })),
   },
@@ -36,11 +55,17 @@ export const SEAT_TEMPLATES: { id: SeatTemplateId; items: PlacementItem[] }[] = 
       Array.from({ length: 5 }, (_, i) => ({ dx: i, dy, facing: "n" as const })),
     ),
   },
+  // 部長席: 1×3 の横長の机 1 つ
+  { id: "managerDesk", items: [{ dx: 0, dy: 0, facing: "n", span: 3 }] },
 ];
 
-export const itemsSize = (items: { dx: number; dy: number }[]) => ({
-  w: items.length ? Math.max(...items.map((i) => i.dx)) + 1 : 0,
-  h: items.length ? Math.max(...items.map((i) => i.dy)) + 1 : 0,
+/** アイテムのフットプリント（幅・高さ） */
+const itemSize = (i: { facing?: Facing; span?: number }) =>
+  i.facing ? seatSize({ facing: i.facing, span: i.span }) : { w: 1, h: 1 };
+
+export const itemsSize = (items: { dx: number; dy: number; facing?: Facing; span?: number }[]) => ({
+  w: items.length ? Math.max(...items.map((i) => i.dx + itemSize(i).w)) : 0,
+  h: items.length ? Math.max(...items.map((i) => i.dy + itemSize(i).h)) : 0,
 });
 
 /** 配置アイテムを時計回りに 90°×steps 回転し、左上を (0,0) に正規化 */
@@ -49,9 +74,10 @@ export function rotateItems<T extends PlacementItem>(items: T[], steps = 1): T[]
   const n = (((steps % 4) + 4) % 4) as 0 | 1 | 2 | 3;
   for (let k = 0; k < n; k++) {
     const { h } = itemsSize(cur);
+    // 時計回り 90°: (x, y) → (H - 1 - y, x)。フットプリントの左上は (H - (y + h), x)
     cur = cur.map((it) => ({
       ...it,
-      dx: h - 1 - it.dy,
+      dx: h - it.dy - itemSize(it).h,
       dy: it.dx,
       facing: rotateFacing(it.facing),
     }));
@@ -68,6 +94,7 @@ export function itemsFromSeats(seats: Seat[]): PlacementItem[] {
     dx: s.x - minX,
     dy: s.y - minY,
     facing: s.facing,
+    ...(seatSpan(s) > 1 ? { span: seatSpan(s) } : {}),
     label: s.label,
     tags: [...s.tags],
   }));
@@ -95,7 +122,12 @@ export interface RoomTemplate {
 }
 
 const place = (items: PlacementItem[], ox: number, oy: number) =>
-  items.map((i) => ({ x: ox + i.dx, y: oy + i.dy, facing: i.facing }));
+  items.map((i) => ({
+    x: ox + i.dx,
+    y: oy + i.dy,
+    facing: i.facing,
+    ...(i.span && i.span > 1 ? { span: i.span } : {}),
+  }));
 
 function withObstacles(w: number, h: number, obstacles: { x: number; y: number }[]): CellKind[] {
   const cells: CellKind[] = Array.from({ length: w * h }, () => "floor");

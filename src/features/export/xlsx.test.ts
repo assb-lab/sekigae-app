@@ -127,3 +127,44 @@ describe("exportXlsx", () => {
     expect(roster.getCell("A2").font.name).toBe("Arial");
   });
 });
+
+describe("exportXlsx wide desks", () => {
+  it("merges the cells of a wide desk and keeps the name in the top-left cell", async () => {
+    const project = makeExportFixture();
+    const room = project.layout.rooms[0]!;
+    const plan = project.plans[0]!;
+    // 割当済みの席と、その右隣の席を 1 つの 1×2 の机にまとめる
+    const seat = room.seats.find(
+      (s) => plan.assignment[s.id] && room.seats.some((o) => o.x === s.x + 1 && o.y === s.y),
+    )!;
+    expect(seat).toBeDefined();
+    const right = room.seats.find((o) => o.x === seat.x + 1 && o.y === seat.y)!;
+    room.seats = room.seats.filter((o) => o.id !== right.id);
+    for (const p of project.plans) delete p.assignment[right.id];
+    seat.facing = "n";
+    seat.span = 2;
+    const model = buildExportModel(project, {
+      lang: "ja",
+      columns: EXPORT_COLUMNS,
+      colorBy: "role",
+      date: DATE,
+    });
+    const ms = model.rooms[0]!.seats.find((s) => s.id === seat.id)!;
+    expect([ms.w, ms.h]).toEqual([2, 1]);
+    const cells = model.rooms[0]!.cells.filter((c) => c.seatId === seat.id);
+    expect(cells).toHaveLength(2);
+
+    const bytes = await exportXlsx(model);
+    const ExcelJS = await loadExcelJS();
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+    );
+    const ws = wb.worksheets[0]!;
+    const anchor = ws.getCell(4 + seat.y, 2 + seat.x);
+    expect(anchor.value).toBe(`${ms.member!.name}\n${ms.member!.subtitle}`);
+    expect(anchor.isMerged).toBe(true);
+    expect(ws.getCell(4 + seat.y, 2 + seat.x + 1).isMerged).toBe(true);
+    expect(ws.getCell(4 + seat.y, 2 + seat.x + 1).master.address).toBe(anchor.address);
+  });
+});

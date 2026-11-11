@@ -1,6 +1,7 @@
 /** 部屋エディタの純関数（React 非依存） */
 import { computeRoomDepth } from "@/domain/geometry/depth";
 import { cellAt, DIRS, inBounds, isPerimeterSide } from "@/domain/geometry/room";
+import { seatCells, seatRect, seatsOverlap, type SeatShape } from "@/domain/geometry/seat";
 import type { Entrance, Facing, ID, Project, Room, Seat } from "@/domain/schema";
 import { MAX_ROOM_SIZE } from "@/domain/schema";
 
@@ -199,17 +200,32 @@ export function findFreeSpot(rooms: Room[], w: number, h: number, gap = 2): Pt {
   return { x: maxX + gap, y: minY };
 }
 
-/** セルに席を置けるか（床・席なし） */
-export function canPlaceSeat(room: Room, x: number, y: number, ignore?: ReadonlySet<ID>): boolean {
-  if (!inBounds(room, x, y) || cellAt(room, x, y) !== "floor") return false;
-  return !room.seats.some((s) => s.x === x && s.y === y && !ignore?.has(s.id));
+/**
+ * (x, y) を左上とする席を置けるか（占有する全セルが床で、他の席と重ならない）。
+ * shape を省略すると 1×1 の席として判定する。
+ */
+export function canPlaceSeat(
+  room: Room,
+  x: number,
+  y: number,
+  ignore?: ReadonlySet<ID>,
+  shape: Pick<SeatShape, "facing" | "span"> = { facing: "n" },
+): boolean {
+  const seat = { x, y, facing: shape.facing, span: shape.span };
+  if (!seatCells(seat).every((c) => inBounds(room, c.x, c.y) && cellAt(room, c.x, c.y) === "floor"))
+    return false;
+  return !room.seats.some((s) => !ignore?.has(s.id) && seatsOverlap(s, seat));
 }
+
+/** 席を別の向き・幅に変えられるか（自分自身は無視） */
+export const canReshapeSeat = (room: Room, seat: Seat, shape: Pick<SeatShape, "facing" | "span">) =>
+  canPlaceSeat(room, seat.x, seat.y, new Set([seat.id]), shape);
 
 /** 選択席を (dx, dy) 動かせるか */
 export function canMoveSeats(room: Room, ids: ReadonlySet<ID>, dx: number, dy: number): boolean {
   return room.seats
     .filter((s) => ids.has(s.id))
-    .every((s) => canPlaceSeat(room, s.x + dx, s.y + dy, ids));
+    .every((s) => canPlaceSeat(room, s.x + dx, s.y + dy, ids, s));
 }
 
 /** 点 (lx, ly)（部屋ローカル実数座標）に最も近い外周の辺 */
@@ -256,7 +272,11 @@ export function resizeLoss(
     const y = p.y + offset.dy;
     return x < 0 || y < 0 || x >= width || y >= height;
   };
-  return { seats: room.seats.filter(out), entrances: room.entrances.filter(out) };
+  const seatOut = (s: Seat) => {
+    const f = seatRect(s);
+    return out(f) || out({ x: f.x + f.w - 1, y: f.y + f.h - 1 });
+  };
+  return { seats: room.seats.filter(seatOut), entrances: room.entrances.filter(out) };
 }
 
 export type ResizeHandle = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";

@@ -321,10 +321,13 @@ function drawSeat(slide: Slide, ctx: Ctx, seat: ExportSeat, ox: number, oy: numb
   const pad = cell * 0.06;
   const chairDepth = cell * 0.18;
   const back = CHAIR_SHIFT[seat.facing];
+  // 横長の机はフットプリント全体（seat.w × seat.h セル）に描く
+  const fw = seat.w * cell;
+  const fh = seat.h * cell;
   let x = ox + seat.x * cell + pad;
   let y = oy + seat.y * cell + pad;
-  let w = cell - pad * 2;
-  let h = cell - pad * 2;
+  let w = fw - pad * 2;
+  let h = fh - pad * 2;
   // 机は椅子の分だけ前へ
   if (back[0] !== 0) {
     w -= chairDepth;
@@ -336,8 +339,8 @@ function drawSeat(slide: Slide, ctx: Ctx, seat: ExportSeat, ox: number, oy: numb
   // 椅子
   const chairLong = cell * 0.4;
   const chairShort = chairDepth * 0.85;
-  const ccx = ox + seat.x * cell + cell / 2 + back[0] * (cell / 2 - pad - chairDepth / 2);
-  const ccy = oy + seat.y * cell + cell / 2 + back[1] * (cell / 2 - pad - chairDepth / 2);
+  const ccx = ox + seat.x * cell + fw / 2 + back[0] * (fw / 2 - pad - chairDepth / 2);
+  const ccy = oy + seat.y * cell + fh / 2 + back[1] * (fh / 2 - pad - chairDepth / 2);
   const cw = back[0] !== 0 ? chairShort : chairLong;
   const ch = back[0] !== 0 ? chairLong : chairShort;
   slide.addShape("roundRect", {
@@ -502,8 +505,8 @@ function addOverviewSlide(ctx: Ctx) {
         shape: "rect",
         x: rx + seat.x * cell + p,
         y: ry + seat.y * cell + p,
-        w: cell - p * 2,
-        h: cell - p * 2,
+        w: seat.w * cell - p * 2,
+        h: seat.h * cell - p * 2,
         fill: { color: hex(seat.fill) },
         line: { color: "64748B", width: 0.5 },
         color: hex(seat.text),

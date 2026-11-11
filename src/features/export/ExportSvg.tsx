@@ -41,7 +41,6 @@ function RoomShapes({
     .map((s) => `M${s.x1 * u} ${s.y1 * u}L${s.x2 * u} ${s.y2 * u}`)
     .join("");
   const pad = u * 0.06;
-  const size = u - pad * 2;
   return (
     <g>
       {cellRuns(room, (c) => c.kind !== "void").map((r) => (
@@ -83,30 +82,33 @@ function RoomShapes({
       {room.seats.map((s) => {
         const x = s.x * u + pad;
         const y = s.y * u + pad;
+        // 横長の机はフットプリント全体
+        const sw = s.w * u - pad * 2;
+        const sh = s.h * u - pad * 2;
         const m = s.member;
         let text: React.ReactNode = null;
         if (m && detail === "thumb") {
-          const fs = fitFont(m.short, size, size * 0.6, u * 0.42, 1);
+          const fs = fitFont(m.short, sw, sh * 0.6, u * 0.42, 1);
           text = (
-            <text x={x + size / 2} y={y + size / 2} fontSize={fs} dominantBaseline="central">
+            <text x={x + sw / 2} y={y + sh / 2} fontSize={fs} dominantBaseline="central">
               {m.short}
             </text>
           );
         } else if (m) {
-          const nl = nameLines(m.name, size, m.subtitle ? size * 0.62 : size, u * 0.3, 4);
+          const nl = nameLines(m.name, sw, m.subtitle ? sh * 0.62 : sh, u * 0.3, 4);
           const sub = m.subtitle
-            ? Math.min(nl.fontSize * 0.8, fitFont(m.subtitle, size, size * 0.3, u * 0.2, 3))
+            ? Math.min(nl.fontSize * 0.8, fitFont(m.subtitle, sw, sh * 0.3, u * 0.2, 3))
             : 0;
           const total = nl.lines.length * nl.fontSize * 1.15 + (sub ? sub * 1.2 : 0);
-          const top = y + size / 2 - total / 2;
+          const top = y + sh / 2 - total / 2;
           const lineH = nl.fontSize * 1.15;
           const lastY = top + nl.lines.length * lineH;
           text = (
-            <text x={x + size / 2} fontSize={nl.fontSize}>
+            <text x={x + sw / 2} fontSize={nl.fontSize}>
               {nl.lines.map((line, i) => (
                 <tspan
                   key={i}
-                  x={x + size / 2}
+                  x={x + sw / 2}
                   y={top + (i + 1) * lineH - nl.fontSize * 0.25}
                   fontWeight={700}
                 >
@@ -114,7 +116,7 @@ function RoomShapes({
                 </tspan>
               ))}
               {sub ? (
-                <tspan x={x + size / 2} y={lastY + sub * 1.05} fontSize={sub}>
+                <tspan x={x + sw / 2} y={lastY + sub * 1.05} fontSize={sub}>
                   {m.subtitle}
                 </tspan>
               ) : null}
@@ -123,9 +125,9 @@ function RoomShapes({
         } else if (detail === "full") {
           text = (
             <text
-              x={x + size / 2}
-              y={y + size / 2}
-              fontSize={fitFont(s.label, size, size * 0.4, u * 0.2, 3)}
+              x={x + sw / 2}
+              y={y + sh / 2}
+              fontSize={fitFont(s.label, sw, sh * 0.4, u * 0.2, 3)}
               dominantBaseline="central"
             >
               {s.label}
@@ -137,8 +139,8 @@ function RoomShapes({
             <rect
               x={x}
               y={y}
-              width={size}
-              height={size}
+              width={sw}
+              height={sh}
               rx={u * 0.1}
               fill={s.fill}
               stroke={m ? "#475569" : "#94a3b8"}

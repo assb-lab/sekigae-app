@@ -78,7 +78,9 @@
     "copiedRoom": "Copied “{{name}}”",
     "placeOutside": "Place it inside a room",
     "nothingPlaced": "Nothing can be placed here",
-    "partiallyPlaced": "Placed {{placed}} of {{total}} seats (skipped blocked cells)"
+    "partiallyPlaced": "Placed {{placed}} of {{total}} seats (skipped blocked cells)",
+    "reshapeBlocked_one": "{{count}} seat was left unchanged because it would hit a wall, obstacle or another seat",
+    "reshapeBlocked_other": "{{count}} seats were left unchanged because they would hit a wall, obstacle or another seat"
   },
   "tools": {
     "label": "Tools",
@@ -91,6 +93,8 @@
     "eraser": "Eraser",
     "pan": "Hand (pan)",
     "facing": "New seat facing: {{dir}}",
+    "span_one": "New seat width: 1×{{count}}",
+    "span_other": "New seat width: 1×{{count}}",
     "hint": {
       "select": "Click to select, drag to move or marquee",
       "floor": "Paint floor. Shift+drag for a rectangle",
@@ -99,7 +103,8 @@
       "seat": "Click to add/remove seats, drag to paint",
       "entrance": "Place an entrance on a perimeter edge",
       "eraser": "Erase seats, entrances and obstacles",
-      "pan": "Drag to move the view"
+      "pan": "Drag to move the view",
+      "span": "Click to cycle (1×1 / 1×2 / 1×3 / 1×4). 2 or more makes a wide desk, e.g. a manager's desk"
     }
   },
   "hint": {
@@ -134,8 +139,10 @@
       "island2x2": "Island 2×2",
       "island2x3": "Island 2×3",
       "island2x4": "Island 2×4",
+      "islandHead": "Island + head desk",
       "wallRow": "Wall row",
-      "classroom": "Classroom"
+      "classroom": "Classroom",
+      "managerDesk": "Manager desk 1×3"
     },
     "room": {
       "empty": "Empty",
@@ -177,6 +184,10 @@
     "seat": "Seat",
     "label": "Label",
     "facing": "Facing",
+    "span": "Desk width",
+    "spanHint": "A wide desk (e.g. a manager's desk) extends to the sitter's left and right and still seats one person",
+    "spanOption_one": "Width 1×{{count}}",
+    "spanOption_other": "Width 1×{{count}}",
     "tags": "Tags",
     "addTag": "Add tag",
     "removeTag": "Remove tag “{{tag}}”",

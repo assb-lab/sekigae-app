@@ -2,6 +2,7 @@
  * ルールエディタ用の小さな部屋図（自前の SVG）。席のクリック・範囲選択、奥行きヒートマップ表示。
  */
 import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { seatCenter, seatSize } from "@/domain/geometry/seat";
 import type { ID, Room } from "@/domain/schema";
 import { heatColor } from "@/graphics/palette";
 import { cn } from "@/lib/utils";
@@ -58,11 +59,10 @@ export function MiniRoomMap({
   const seatCenters = useMemo(
     () =>
       rooms.flatMap((r) =>
-        r.seats.map((s) => ({
-          id: s.id,
-          cx: r.position.x + s.x + 0.5,
-          cy: r.position.y + s.y + 0.5,
-        })),
+        r.seats.map((s) => {
+          const c = seatCenter(s);
+          return { id: s.id, cx: r.position.x + c.x, cy: r.position.y + c.y };
+        }),
       ),
     [rooms],
   );
@@ -201,8 +201,8 @@ export function MiniRoomMap({
                   data-highlight={hl || undefined}
                   x={s.x + 0.12}
                   y={s.y + 0.12}
-                  width={0.76}
-                  height={0.76}
+                  width={seatSize(s).w - 0.24}
+                  height={seatSize(s).h - 0.24}
                   rx={0.16}
                   style={{
                     fill,

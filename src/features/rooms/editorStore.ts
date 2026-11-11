@@ -1,5 +1,6 @@
 /** 部屋エディタの一時状態（Undo・永続化の対象外） */
 import { create } from "zustand";
+import { seatSpan } from "@/domain/geometry/seat";
 import type { Facing, ID, Room } from "@/domain/schema";
 import type { NumberingOrder, ResizeHandle } from "./lib/editing";
 import type { PlacementItem } from "./lib/templates";
@@ -68,6 +69,8 @@ export interface EditorState {
   tool: ToolId;
   /** 新しい席の向き（R で回転） */
   facing: Facing;
+  /** 新しい席の幅（セル数）。2 以上で横長の机 */
+  seatSpan: number;
   numbering: NumberingOrder;
   hover: Hover | null;
   preview: DragPreview | null;
@@ -79,6 +82,7 @@ export interface EditorState {
   renamingRoomId: ID | null;
   setTool: (tool: ToolId) => void;
   setFacing: (f: Facing) => void;
+  setSeatSpan: (n: number) => void;
   setNumbering: (o: NumberingOrder) => void;
   setHover: (h: Hover | null) => void;
   setPreview: (p: DragPreview | null) => void;
@@ -104,6 +108,7 @@ const sameHover = (a: Hover | null, b: Hover | null) =>
 export const useEditor = create<EditorState>()((set) => ({
   tool: "select",
   facing: "n",
+  seatSpan: 1,
   numbering: "row",
   hover: null,
   preview: null,
@@ -113,6 +118,7 @@ export const useEditor = create<EditorState>()((set) => ({
   renamingRoomId: null,
   setTool: (tool) => set({ tool, placement: null, preview: null }),
   setFacing: (facing) => set({ facing }),
+  setSeatSpan: (n) => set({ seatSpan: seatSpan({ span: n }) }),
   setNumbering: (numbering) => set({ numbering }),
   setHover: (hover) => set((s) => (sameHover(s.hover, hover) ? s : { hover })),
   setPreview: (preview) => set({ preview }),

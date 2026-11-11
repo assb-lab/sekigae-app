@@ -6,6 +6,7 @@
  */
 import { GENDERS, type Gender } from "@/domain/genders";
 import { compareRole, ROLE_ORDER, type RoleKey } from "@/domain/roles";
+import { seatCells, seatSize } from "@/domain/geometry/seat";
 import type { CellKind, Facing, ID, Member, Project, Room, SeatPlan } from "@/domain/schema";
 import { GENDER_COLORS, readableText, ROLE_COLORS } from "@/graphics/palette";
 import type { ParseKeys } from "i18next";
@@ -86,8 +87,11 @@ export interface ExportPerson {
 
 export interface ExportSeat {
   id: ID;
+  /** フットプリントの左上と幅・高さ（横長の机は w または h が 2 以上） */
   x: number;
   y: number;
+  w: number;
+  h: number;
   facing: Facing;
   label: string;
   member?: ExportPerson;
@@ -443,7 +447,9 @@ export function buildExportModel(project: Project, options: ExportOptions): Expo
       x < 0 || y < 0 || x >= room.width || y >= room.height
         ? "void"
         : (room.cells[y * room.width + x] ?? "void");
-    const seatByPos = new Map(room.seats.map((s) => [`${s.x},${s.y}`, s.id]));
+    const seatByPos = new Map(
+      room.seats.flatMap((s) => seatCells(s).map((c) => [`${c.x},${c.y}`, s.id] as const)),
+    );
     const cells: ExportCell[] = [];
     for (let y = 0; y < room.height; y++)
       for (let x = 0; x < room.width; x++) {
@@ -469,6 +475,7 @@ export function buildExportModel(project: Project, options: ExportOptions): Expo
         id: s.id,
         x: s.x,
         y: s.y,
+        ...seatSize(s),
         facing: s.facing,
         label: s.label,
         member: p,

@@ -111,9 +111,15 @@ function paintRoom(
     const border: Partial<Borders> = {};
     cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     const seat = c.seatId ? seatById.get(c.seatId) : undefined;
+    // 横長の机は左上セルに書き、あとでフットプリントを結合する
+    const anchor = seat && c.x === seat.x && c.y === seat.y;
     if (seat) {
       const thin = { style: "thin" as const, color: { argb: argb("#94a3b8") } };
       border.top = border.right = border.bottom = border.left = thin;
+    }
+    if (seat && !anchor) {
+      cell.fill = solid(seat.fill);
+    } else if (seat) {
       if (seat.member) {
         cell.value = seat.member.subtitle
           ? `${seat.member.name}\n${seat.member.subtitle}`
@@ -144,6 +150,16 @@ function paintRoom(
       cell.font = baseFont(ctx, { size: 8, bold: true, color: { argb: argb(ENTRANCE_COLOR) } });
     }
     cell.border = border;
+  }
+  for (const seat of room.seats) {
+    if (seat.w === 1 && seat.h === 1) continue;
+    const r = row0 + seat.y;
+    const c = col0 + seat.x;
+    try {
+      ws.mergeCells(r, c, r + seat.h - 1, c + seat.w - 1);
+    } catch {
+      // 他の部屋の結合と重なる場合は結合しない（値は左上セルに入っている）
+    }
   }
 }
 

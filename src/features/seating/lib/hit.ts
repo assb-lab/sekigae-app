@@ -2,15 +2,29 @@
  * 席のヒットテストとキーボード移動（純関数）。ワールド座標 = セル単位。
  * パン / ズーム中でも viewport.clientToWorld でワールド座標に直してから使う。
  */
+import { seatCells, seatSize } from "@/domain/geometry/seat";
 import type { ID, Room, Seat } from "@/domain/schema";
 
 export interface SeatPos {
   seat: Seat;
   room: Room;
-  /** 席セルの左上（ワールド座標） */
+  /** 席（横長の机はフットプリント）の左上（ワールド座標） */
   x: number;
   y: number;
+  /** フットプリントの幅・高さ（1×1 の席は 1, 1） */
+  w: number;
+  h: number;
 }
+
+/** チップなど 1×1 の部品を置く左上（横長の机では中央のセル位置） */
+export const seatAnchor = (p: SeatPos) => ({ x: p.x + (p.w - 1) / 2, y: p.y + (p.h - 1) / 2 });
+
+/** 点から席の「中心線」（各セル中心を結ぶ線分）までの距離 */
+const distTo = (p: SeatPos, x: number, y: number) => {
+  const nx = Math.min(Math.max(x, p.x + 0.5), p.x + p.w - 0.5);
+  const ny = Math.min(Math.max(y, p.y + 0.5), p.y + p.h - 0.5);
+  return Math.hypot(nx - x, ny - y);
+};
 
 const posCache = new WeakMap<Room[], { list: SeatPos[]; byCell: Map<string, SeatPos> }>();
 
@@ -21,9 +35,16 @@ function build(rooms: Room[]) {
     const byCell = new Map<string, SeatPos>();
     for (const room of rooms)
       for (const seat of room.seats) {
-        const p = { seat, room, x: room.position.x + seat.x, y: room.position.y + seat.y };
+        const p = {
+          seat,
+          room,
+          x: room.position.x + seat.x,
+          y: room.position.y + seat.y,
+          ...seatSize(seat),
+        };
         list.push(p);
-        byCell.set(`${p.x},${p.y}`, p);
+        for (const c of seatCells(seat))
+          byCell.set(`${room.position.x + c.x},${room.position.y + c.y}`, p);
       }
     c = { list, byCell };
     posCache.set(rooms, c);
@@ -55,7 +76,7 @@ export function nearestSeat(rooms: Room[], x: number, y: number, maxDist = 1): S
     for (let dx = -1; dx <= 1; dx++) {
       const p = byCell.get(`${cx + dx},${cy + dy}`);
       if (!p) continue;
-      const d = Math.hypot(p.x + 0.5 - x, p.y + 0.5 - y);
+      const d = distTo(p, x, y);
       if (d < bestD) {
         bestD = d;
         best = p;
@@ -102,8 +123,10 @@ export function nextSeatInDirection(
   let bestCost = Infinity;
   for (const p of list) {
     if (p === from) continue;
-    const vx = p.x - from.x;
-    const vy = p.y - from.y;
+    const a = seatAnchor(p);
+    const b = seatAnchor(from);
+    const vx = a.x - b.x;
+    const vy = a.y - b.y;
     const main = vx * dx + vy * dy;
     if (main <= 0) continue;
     const side = Math.abs(vx * dy - vy * dx);
