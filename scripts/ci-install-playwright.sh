@@ -17,18 +17,24 @@ if [ "$#" -eq 0 ]; then
 fi
 
 PLAYWRIGHT="${PLAYWRIGHT:-pnpm exec playwright}"
-ATTEMPTS="${ATTEMPTS:-3}"
 RETRY_DELAY="${RETRY_DELAY:-15}"
-DEPS_TIMEOUT="${DEPS_TIMEOUT:-600}"
+# ブラウザ本体の取得の試行回数
+ATTEMPTS="${ATTEMPTS:-3}"
+# システム依存は 1 回あたり DEPS_TIMEOUT 秒 × DEPS_ATTEMPTS 回まで。既定では最悪でも
+# 210×2 + 15 = 435 秒（約 7 分）で諦めるので、ジョブの timeout-minutes: 30 の中で
+# ビルドとテストに十分な時間が残る
+DEPS_ATTEMPTS="${DEPS_ATTEMPTS:-2}"
+DEPS_TIMEOUT="${DEPS_TIMEOUT:-210}"
 
-# 失敗したら RETRY_DELAY, 2×RETRY_DELAY, … 秒待って再試行
+# retry <回数> <コマンド…>: 失敗したら RETRY_DELAY, 2×RETRY_DELAY, … 秒待って再試行
 retry() {
-  local n=1 delay="$RETRY_DELAY"
+  local max="$1" n=1 delay="$RETRY_DELAY"
+  shift
   until "$@"; do
-    if [ "$n" -ge "$ATTEMPTS" ]; then
+    if [ "$n" -ge "$max" ]; then
       return 1
     fi
-    echo "::warning::'$*' failed (attempt $n/$ATTEMPTS), retrying in ${delay}s"
+    echo "::warning::'$*' failed (attempt $n/$max), retrying in ${delay}s"
     sleep "$delay"
     n=$((n + 1))
     delay=$((delay * 2))
@@ -45,12 +51,13 @@ if [ -d /etc/apt/apt.conf.d ] && command -v sudo >/dev/null 2>&1; then
 fi
 
 # shellcheck disable=SC2086 # PLAYWRIGHT は "pnpm exec playwright" のように分割して使う
-if ! retry timeout "$DEPS_TIMEOUT" $PLAYWRIGHT install-deps "$@"; then
+# timeout は（--foreground なしでは）プロセスグループごと止めるので、sudo apt-get も残らない
+if ! retry "$DEPS_ATTEMPTS" timeout "$DEPS_TIMEOUT" $PLAYWRIGHT install-deps "$@"; then
   echo "::warning::Could not install system dependencies for $* (apt mirrors unreachable?). Continuing with the packages already on the runner; browser launch will fail in the tests if something essential is missing."
 fi
 
 # shellcheck disable=SC2086
-if ! retry $PLAYWRIGHT install "$@"; then
+if ! retry "$ATTEMPTS" $PLAYWRIGHT install "$@"; then
   echo "::error::Could not download Playwright browsers: $*"
   exit 1
 fi
