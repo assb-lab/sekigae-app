@@ -167,4 +167,39 @@ describe("exportXlsx wide desks", () => {
     expect(ws.getCell(4 + seat.y, 2 + seat.x + 1).isMerged).toBe(true);
     expect(ws.getCell(4 + seat.y, 2 + seat.x + 1).master.address).toBe(anchor.address);
   });
+
+  it("keeps wall and entrance borders on every cell of a merged desk", async () => {
+    const project = makeExportFixture();
+    const room = project.layout.rooms[0]!;
+    const removed = new Set(room.seats.map((s) => s.id));
+    for (const p of project.plans)
+      for (const id of Object.keys(p.assignment)) if (removed.has(id)) delete p.assignment[id];
+    // 右の壁に接する 1×2 の机（右端のセルに入口）
+    const x = room.width - 2;
+    const y = 2;
+    room.cells[y * room.width + x] = "floor";
+    room.cells[y * room.width + x + 1] = "floor";
+    room.seats = [{ id: "wide", x, y, facing: "n", label: "W-01", tags: [], span: 2 }];
+    room.entrances = [{ id: "door", x: x + 1, y, side: "e" }];
+    project.plans[0]!.assignment.wide = project.members[0]!.id;
+    const model = buildExportModel(project, {
+      lang: "ja",
+      columns: EXPORT_COLUMNS,
+      colorBy: "role",
+      date: DATE,
+    });
+    const bytes = await exportXlsx(model);
+    const ExcelJS = await loadExcelJS();
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+    );
+    const ws = wb.worksheets[0]!;
+    const anchor = ws.getCell(4 + y, 2 + x);
+    const end = ws.getCell(4 + y, 2 + x + 1);
+    expect(end.isMerged).toBe(true);
+    // 右端のセルは入口（太線）。左上セルの細線で上書きされない
+    expect(end.border.right?.style).toBe("thick");
+    expect(anchor.border.right?.style).toBe("thin");
+  });
 });

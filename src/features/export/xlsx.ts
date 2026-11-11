@@ -102,6 +102,8 @@ function paintRoom(
   const paintVoid = opts.paintVoid ?? true;
   const { strings } = ctx.model;
   const seatById = new Map(room.seats.map((s) => [s.id, s]));
+  /** 横長の机の左上以外のセルの罫線（結合で左上のスタイルに置き換わるので後で戻す） */
+  const keepBorders: { cell: Cell; border: Partial<Borders> }[] = [];
   for (const c of room.cells) {
     if (c.kind === "void") {
       if (paintVoid) ws.getCell(row0 + c.y, col0 + c.x).fill = solid(VOID_FILL);
@@ -119,6 +121,7 @@ function paintRoom(
     }
     if (seat && !anchor) {
       cell.fill = solid(seat.fill);
+      keepBorders.push({ cell, border });
     } else if (seat) {
       if (seat.member) {
         cell.value = seat.member.subtitle
@@ -161,6 +164,9 @@ function paintRoom(
       // 他の部屋の結合と重なる場合は結合しない（値は左上セルに入っている）
     }
   }
+  // ExcelJS の結合は左上セルの style オブジェクトを共有させるので、別オブジェクトにして
+  // 各セル自身の罫線（外壁・入口）を戻す。Excel は結合範囲の外周を各セルの罫線で描く
+  for (const { cell, border } of keepBorders) cell.style = { ...cell.style, border };
 }
 
 /**
