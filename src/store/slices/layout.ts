@@ -1,5 +1,6 @@
 import { createRoom } from "@/domain/factory";
 import { resizeRoom as resizeRoomGeom } from "@/domain/geometry/room";
+import { seatCells, seatCovers, seatSpan, seatsOverlap } from "@/domain/geometry/seat";
 import type { CellKind, Entrance, ID, Room, Seat } from "@/domain/schema";
 import { newId } from "@/lib/id";
 import { clone, type Get, type Update } from "./types";
@@ -112,7 +113,7 @@ export function createLayoutSlice(update: Update, _get: Get): LayoutSlice {
           if (x < 0 || y < 0 || x >= r.width || y >= r.height) continue;
           r.cells[y * r.width + x] = kind;
           if (kind !== "floor") {
-            for (const s of r.seats) if (s.x === x && s.y === y) removed.add(s.id);
+            for (const s of r.seats) if (seatCovers(s, x, y)) removed.add(s.id);
           }
           if (kind === "void") r.entrances = r.entrances.filter((e) => !(e.x === x && e.y === y));
         }
@@ -125,9 +126,6 @@ export function createLayoutSlice(update: Update, _get: Get): LayoutSlice {
       const ids: ID[] = [];
       withRoom(roomId, (r) => {
         for (const s of seats) {
-          if (s.x < 0 || s.y < 0 || s.x >= r.width || s.y >= r.height) continue;
-          if (r.seats.some((x) => x.x === s.x && x.y === s.y)) continue;
-          if (r.cells[s.y * r.width + s.x] !== "floor") continue;
           const seat: Seat = {
             id: s.id ?? newId("seat_"),
             x: s.x,
@@ -136,6 +134,12 @@ export function createLayoutSlice(update: Update, _get: Get): LayoutSlice {
             label: s.label ?? "",
             tags: s.tags ?? [],
           };
+          const span = seatSpan(s);
+          if (span > 1) seat.span = span;
+          const cells = seatCells(seat);
+          if (cells.some((c) => c.x < 0 || c.y < 0 || c.x >= r.width || c.y >= r.height)) continue;
+          if (cells.some((c) => r.cells[c.y * r.width + c.x] !== "floor")) continue;
+          if (r.seats.some((x) => seatsOverlap(x, seat))) continue;
           r.seats.push(seat);
           ids.push(seat.id);
         }
@@ -145,7 +149,15 @@ export function createLayoutSlice(update: Update, _get: Get): LayoutSlice {
     updateSeats: (roomId, seatIds, patch) =>
       withRoom(roomId, (r) => {
         const set = new Set(seatIds);
-        for (const s of r.seats) if (set.has(s.id)) Object.assign(s, patch);
+        for (const s of r.seats)
+          if (set.has(s.id)) {
+            Object.assign(s, patch);
+            // 幅 1 はフィールド自体を持たない（既存データと同じ形に保つ）
+            if ("span" in patch) {
+              if (seatSpan(s) > 1) s.span = seatSpan(s);
+              else delete s.span;
+            }
+          }
       }),
     moveSeats: (roomId, moves) =>
       withRoom(roomId, (r) => {

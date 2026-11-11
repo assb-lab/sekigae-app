@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FACING_ANGLE } from "@/components/canvas";
+import { MAX_SEAT_SPAN } from "@/domain/geometry/seat";
 import { cn } from "@/lib/utils";
 import { rotate } from "../actions";
 import { useEditor } from "../editorStore";
@@ -17,6 +18,8 @@ export function ToolPalette() {
   const tool = useEditor((s) => s.tool);
   const setTool = useEditor((s) => s.setTool);
   const facing = useEditor((s) => s.facing);
+  const span = useEditor((s) => s.seatSpan);
+  const setSeatSpan = useEditor((s) => s.setSeatSpan);
   const templateActive = useEditor(
     (s) => s.placement?.kind === "seats" && s.placement.source === "template",
   );
@@ -87,6 +90,28 @@ export function ToolPalette() {
         <TooltipContent side="right">
           {t("tools.facing", { dir: t(`facing.${facing}`) })}{" "}
           <kbd className="ml-1 opacity-70">R</kbd>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "grid size-9 place-items-center rounded-lg text-[10px] font-semibold tabular-nums transition-colors",
+              span > 1
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+            aria-label={t("tools.span", { count: span })}
+            data-testid="default-span"
+            onClick={() => setSeatSpan(span >= MAX_SEAT_SPAN ? 1 : span + 1)}
+          >
+            1×{span}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <div className="font-medium">{t("tools.span", { count: span })}</div>
+          <div className="opacity-80">{t("tools.hint.span")}</div>
         </TooltipContent>
       </Tooltip>
       <Popover>

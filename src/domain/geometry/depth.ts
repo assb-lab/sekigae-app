@@ -1,9 +1,11 @@
 /**
  * 奥行き (depth): 入口から通路（席のない floor セル）を BFS した距離。docs/DESIGN.md §3.2
  * 席セルは通過不可。席の距離 = 隣接する通路セルの最小距離 + 1。
+ * 横長の机は占有するセルのうち最も入口に近いセルの距離を使う。
  */
 import type { ID, Room } from "../schema";
 import { cellAt, DIRS, inBounds } from "./room";
+import { seatCells } from "./seat";
 
 export interface SeatDepth {
   /** 入口からの距離（ステップ数） */
@@ -27,9 +29,9 @@ export interface RoomDepth {
 export function computeRoomDepth(room: Room): RoomDepth {
   const { width: w, height: h } = room;
   const dist = new Int32Array(w * h).fill(-1);
-  const seatCells = new Set(room.seats.map((s) => s.y * w + s.x));
+  const seatCellSet = new Set(room.seats.flatMap((s) => seatCells(s).map((c) => c.y * w + c.x)));
   const walkable = (x: number, y: number) =>
-    inBounds(room, x, y) && cellAt(room, x, y) === "floor" && !seatCells.has(y * w + x);
+    inBounds(room, x, y) && cellAt(room, x, y) === "floor" && !seatCellSet.has(y * w + x);
 
   const queue: number[] = [];
   for (const e of room.entrances) {
@@ -52,7 +54,7 @@ export function computeRoomDepth(room: Room): RoomDepth {
       if (!inBounds(room, nx, ny)) continue;
       const ni = ny * w + nx;
       if (dist[ni] !== -1) continue;
-      if (seatCells.has(ni) && cellAt(room, nx, ny) === "floor") {
+      if (seatCellSet.has(ni) && cellAt(room, nx, ny) === "floor") {
         dist[ni] = dist[i]! + 1; // 席には入れるが、そこからは展開しない
         continue;
       }
@@ -65,12 +67,17 @@ export function computeRoomDepth(room: Room): RoomDepth {
   const hasEntrance = room.entrances.length > 0;
   const raw = new Map<ID, { dist: number; estimated: boolean }>();
   for (const s of room.seats) {
-    const d = dist[s.y * w + s.x]!;
-    if (d >= 0) raw.set(s.id, { dist: d, estimated: false });
+    const cells = seatCells(s).filter((c) => inBounds(room, c.x, c.y));
+    const reached = cells.map((c) => dist[c.y * w + c.x]!).filter((d) => d >= 0);
+    if (reached.length) raw.set(s.id, { dist: Math.min(...reached), estimated: false });
     else {
       // フォールバック: 最寄り入口へのマンハッタン距離（入口なしなら上端からの距離）
       const est = hasEntrance
-        ? Math.min(...room.entrances.map((e) => Math.abs(e.x - s.x) + Math.abs(e.y - s.y))) + 1
+        ? Math.min(
+            ...cells.flatMap((c) =>
+              room.entrances.map((e) => Math.abs(e.x - c.x) + Math.abs(e.y - c.y)),
+            ),
+          ) + 1
         : s.y + 1;
       raw.set(s.id, { dist: est, estimated: true });
     }

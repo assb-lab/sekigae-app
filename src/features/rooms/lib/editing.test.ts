@@ -4,6 +4,8 @@ import type { Seat } from "@/domain/schema";
 import {
   bresenham,
   canMoveSeats,
+  canPlaceSeat,
+  canReshapeSeat,
   duplicateLabels,
   findFreeSpot,
   nearestPerimeterEdge,
@@ -143,5 +145,77 @@ describe("templates", () => {
     expect(island).toHaveLength(6);
     expect(new Set(island.filter((i) => i.dy === 0).map((i) => i.facing))).toEqual(new Set(["s"]));
     expect(new Set(island.filter((i) => i.dy === 1).map((i) => i.facing))).toEqual(new Set(["n"]));
+  });
+});
+
+describe("wide desks (span)", () => {
+  const wide = (id: string, x: number, y: number, facing: Seat["facing"], span: number): Seat => ({
+    ...seat(id, x, y),
+    facing,
+    span,
+  });
+
+  it("checks every covered cell when placing", () => {
+    const room = createRoom({ name: "A", width: 4, height: 2, seats: [seat("a", 3, 0)] });
+    room.cells[1 * 4 + 1] = "obstacle";
+    expect(canPlaceSeat(room, 0, 0, undefined, { facing: "n", span: 3 })).toBe(true);
+    // 右端が既存の席にぶつかる
+    expect(canPlaceSeat(room, 1, 0, undefined, { facing: "n", span: 3 })).toBe(false);
+    // 部屋からはみ出す
+    expect(canPlaceSeat(room, 2, 0, undefined, { facing: "s", span: 3 })).toBe(false);
+    // 縦向きでは下に伸びて障害物にぶつかる
+    expect(canPlaceSeat(room, 1, 0, undefined, { facing: "e", span: 2 })).toBe(false);
+    expect(canPlaceSeat(room, 0, 0, undefined, { facing: "e", span: 2 })).toBe(true);
+  });
+
+  it("moves and reshapes wide desks against walls and other seats", () => {
+    const room = createRoom({
+      name: "A",
+      width: 5,
+      height: 2,
+      seats: [wide("boss", 0, 0, "n", 3), seat("b", 4, 0)],
+    });
+    expect(canMoveSeats(room, new Set(["boss"]), 0, 1)).toBe(true);
+    expect(canMoveSeats(room, new Set(["boss"]), 1, 0)).toBe(true);
+    expect(canMoveSeats(room, new Set(["boss"]), 2, 0)).toBe(false);
+    const boss = room.seats[0]!;
+    // 東向きにすると縦 3 セル必要 → 高さ 2 の部屋には収まらない
+    expect(canReshapeSeat(room, boss, { facing: "e", span: 3 })).toBe(false);
+    expect(canReshapeSeat(room, boss, { facing: "e", span: 2 })).toBe(true);
+    expect(canReshapeSeat(room, boss, { facing: "n", span: 4 })).toBe(true);
+    expect(canReshapeSeat(room, boss, { facing: "n", span: 5 })).toBe(true); // 4 に丸める
+  });
+
+  it("reports wide desks cut off by a resize", () => {
+    const room = createRoom({
+      name: "A",
+      width: 5,
+      height: 2,
+      seats: [wide("boss", 2, 0, "n", 3)],
+    });
+    expect(resizeLoss(room, 4, 2, { dx: 0, dy: 0 }).seats.map((s) => s.id)).toEqual(["boss"]);
+    expect(resizeLoss(room, 5, 1, { dx: 0, dy: 0 }).seats).toHaveLength(0);
+  });
+
+  it("rotates wide template items around their footprint", () => {
+    const desk = SEAT_TEMPLATES.find((t) => t.id === "managerDesk")!.items;
+    expect(itemsSize(desk)).toEqual({ w: 3, h: 1 });
+    const r1 = rotateItems(desk, 1);
+    expect(r1).toEqual([{ dx: 0, dy: 0, facing: "e", span: 3 }]);
+    expect(itemsSize(r1)).toEqual({ w: 1, h: 3 });
+    expect(rotateItems(desk, 4)).toEqual(desk);
+
+    const head = SEAT_TEMPLATES.find((t) => t.id === "islandHead")!.items;
+    expect(itemsSize(head)).toEqual({ w: 4, h: 2 });
+    for (const steps of [1, 2, 3]) {
+      const rotated = rotateItems(head, steps);
+      const { w, h } = itemsSize(rotated);
+      expect(w * h).toBe(8);
+      expect(Math.min(...rotated.map((i) => i.dx))).toBe(0);
+      expect(Math.min(...rotated.map((i) => i.dy))).toBe(0);
+    }
+    // 2 回転で部長席は反対側（右端）で西向き
+    const flipped = rotateItems(head, 2);
+    expect(flipped.find((i) => i.span === 2)).toMatchObject({ dx: 3, dy: 0, facing: "w" });
   });
 });

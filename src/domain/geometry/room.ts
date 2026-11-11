@@ -1,4 +1,5 @@
 import type { CellKind, Facing, Room } from "../schema";
+import { seatCovers, seatRect } from "./seat";
 
 export const DIRS: Record<Facing, { dx: number; dy: number }> = {
   n: { dx: 0, dy: -1 },
@@ -25,7 +26,7 @@ export function isPerimeterSide(room: Room, x: number, y: number, side: Facing):
 }
 
 export function seatAt(room: Room, x: number, y: number) {
-  return room.seats.find((s) => s.x === x && s.y === y);
+  return room.seats.find((s) => seatCovers(s, x, y));
 }
 
 /** 部屋の幅・高さを変更（左/上方向は offset で内部座標をシフト）。範囲外の席・入口は除外 */
@@ -55,7 +56,10 @@ export function resizeRoom(
     height,
     position: { x: room.position.x - offset.dx, y: room.position.y - offset.dy },
     cells,
-    seats: room.seats.map(shift).filter(inside),
+    seats: room.seats.map(shift).filter((s) => {
+      const f = seatRect(s);
+      return inside(s) && f.x + f.w <= width && f.y + f.h <= height;
+    }),
     entrances: room.entrances.map(shift).filter(inside),
   };
 }

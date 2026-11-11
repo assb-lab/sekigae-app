@@ -109,3 +109,28 @@ describe("compositions and colors", () => {
     expect(shortName("Solo")).toBe("Solo");
   });
 });
+
+describe("hit testing wide desks", () => {
+  it("hits any cell of a wide desk and centers the chip anchor", async () => {
+    const { createRoom } = await import("@/domain/factory");
+    const { seatAnchor, seatPosIndex } = await import("./hit");
+    const room = createRoom({
+      name: "A",
+      position: { x: 10, y: 0 },
+      width: 5,
+      height: 3,
+      seats: [
+        { id: "boss", x: 1, y: 0, facing: "s", label: "B", tags: [], span: 3 },
+        { id: "side", x: 0, y: 1, facing: "e", label: "S", tags: [], span: 2 },
+      ],
+    });
+    const rooms = [room];
+    expect(seatAt(rooms, 13.5, 0.5)?.seat.id).toBe("boss");
+    expect(seatAt(rooms, 10.5, 2.5)?.seat.id).toBe("side");
+    expect(nearestSeat(rooms, 13.5, 1.2)?.seat.id).toBe("boss");
+    const p = seatPosIndex(rooms).get("boss")!;
+    expect([p.w, p.h]).toEqual([3, 1]);
+    expect(seatAnchor(p)).toEqual({ x: 12, y: 0 });
+    expect(seatAnchor(seatPosIndex(rooms).get("side")!)).toEqual({ x: 10, y: 1.5 });
+  });
+});

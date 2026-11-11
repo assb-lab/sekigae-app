@@ -164,3 +164,45 @@ test("shortcuts are disabled while typing and heatmap toggles", async ({ freshPa
   await expect(page.getByTestId("depth-heatmap")).toBeVisible();
   await expect(page.getByTestId("heatmap-legend")).toBeVisible();
 });
+
+test("places, widens and rotates a wide (manager) desk", async ({ freshPage: page }) => {
+  await addRoom(page, "W");
+  await page.keyboard.press("s");
+  // 既定の幅を 1×3 に
+  await page.getByTestId("default-span").click();
+  await page.getByTestId("default-span").click();
+  await expect(page.getByTestId("default-span")).toHaveText("1×3");
+  await clickCell(page, 1, 1);
+  await expect(seatCount(page)).toHaveText("1 席");
+  // 机の上には置けず、右側の空きには置ける
+  await clickCell(page, 4, 1);
+  await expect(seatCount(page)).toHaveText("2 席");
+  await expect(page.locator('[data-layer="seats"] .sk-desk[data-span="3"]')).toHaveCount(2);
+
+  // 机の中央のセルをクリックしても同じ席を選択できる
+  await page.keyboard.press("v");
+  await clickCell(page, 2, 1);
+  await expect(page.getByTestId("span-3")).toHaveAttribute("aria-checked", "true");
+
+  // R で回転すると縦長になり、縦方向のセルで選択できる
+  await page.keyboard.press("r");
+  await page.keyboard.press("Escape");
+  await clickCell(page, 1, 3);
+  await expect(page.getByTestId("facing-e")).toHaveAttribute("aria-checked", "true");
+
+  // 幅を 1 に戻すと通常の席
+  await page.getByTestId("span-1").click();
+  await expect(page.locator('[data-layer="seats"] .sk-desk[data-span="3"]')).toHaveCount(1);
+  await page.getByTestId("undo").click();
+  await expect(page.locator('[data-layer="seats"] .sk-desk[data-span="3"]')).toHaveCount(2);
+});
+
+test("inserts the manager desk template", async ({ freshPage: page }) => {
+  await addRoom(page, "T");
+  await page.getByTestId("template-button").click();
+  await page.getByTestId("template-managerDesk").click();
+  await expect(page.getByTestId("template-picker")).toBeHidden();
+  await clickCell(page, 3, 2);
+  await expect(seatCount(page)).toHaveText("1 席");
+  await expect(page.locator('[data-layer="seats"] .sk-desk[data-span="3"]')).toHaveCount(1);
+});

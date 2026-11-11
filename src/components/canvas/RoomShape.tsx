@@ -96,6 +96,7 @@ export const RoomShape = memo(function RoomShape({
               x={s.x}
               y={s.y}
               facing={s.facing}
+              span={s.span}
               label={s.label}
               accent={seatAccents?.get(s.id)}
               lod={lod}

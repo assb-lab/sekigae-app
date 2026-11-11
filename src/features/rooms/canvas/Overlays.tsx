@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { DoorGlyph, ROOM_HEADER, SeatGlyph } from "@/components/canvas";
 import { cellAt } from "@/domain/geometry/room";
+import { seatRect } from "@/domain/geometry/seat";
 import type { Room } from "@/domain/schema";
 import { useRooms } from "@/store/selectors";
 import { placementCells } from "../actions";
@@ -49,6 +50,7 @@ export function HoverPreview() {
   const hover = useEditor((s) => s.hover);
   const tool = useEditor((s) => s.tool);
   const facing = useEditor((s) => s.facing);
+  const span = useEditor((s) => s.seatSpan);
   const busy = useEditor((s) => s.preview !== null || s.placement !== null);
   const rooms = useRooms();
   if (!hover || busy || tool === "pan") return null;
@@ -67,13 +69,15 @@ export function HoverPreview() {
     return <CellMark x={hover.cellX} y={hover.cellY} color="var(--canvas-violation)" dashed />;
   }
   const { x, y } = hover;
+  const hoveredSeat = hover.seatId ? room.seats.find((s) => s.id === hover.seatId) : undefined;
+  const hs = hoveredSeat ? seatRect(hoveredSeat) : { x, y, w: 1, h: 1 };
   return (
     <g transform={`translate(${room.position.x} ${room.position.y})`}>
       {isPaintTool(tool) && <CellMark x={x} y={y} color={TOOL_COLOR[tool]!} />}
       {tool === "seat" &&
         (hover.seatId ? (
           <g className="sk-ghost">
-            <CellMark x={x} y={y} color="var(--canvas-violation)" />
+            <CellMark x={hs.x} y={hs.y} w={hs.w} h={hs.h} color="var(--canvas-violation)" />
             <path
               d={`M${x + 0.3} ${y + 0.3}L${x + 0.7} ${y + 0.7}M${x + 0.7} ${y + 0.3}L${x + 0.3} ${y + 0.7}`}
               stroke="var(--canvas-violation)"
@@ -81,20 +85,22 @@ export function HoverPreview() {
               strokeLinecap="round"
             />
           </g>
-        ) : canPlaceSeat(room, x, y) ? (
+        ) : canPlaceSeat(room, x, y, undefined, { facing, span }) ? (
           <g className="sk-ghost">
-            <SeatGlyph x={x} y={y} facing={facing} ghost />
+            <SeatGlyph x={x} y={y} facing={facing} span={span} ghost />
           </g>
         ) : (
-          <CellMark x={x} y={y} color="var(--canvas-violation)" />
+          <g className="sk-ghost">
+            <SeatGlyph x={x} y={y} facing={facing} span={span} ghost invalid />
+          </g>
         ))}
       {tool === "select" && hover.seatId && (
         <rect
           className="sk-ghost sk-px1-5"
-          x={x}
-          y={y}
-          width={1}
-          height={1}
+          x={hs.x}
+          y={hs.y}
+          width={hs.w}
+          height={hs.h}
           rx={0.16}
           fill="none"
           stroke="var(--canvas-selection)"
@@ -147,11 +153,12 @@ export function DragPreview() {
           .filter((s) => ids.has(s.id))
           .map((s) => (
             <g key={s.id}>
-              <SeatGlyph x={s.x} y={s.y} facing={s.facing} label={s.label} dimmed />
+              <SeatGlyph x={s.x} y={s.y} facing={s.facing} span={s.span} label={s.label} dimmed />
               <SeatGlyph
                 x={s.x + preview.dx}
                 y={s.y + preview.dy}
                 facing={s.facing}
+                span={s.span}
                 label={s.label}
                 ghost
                 invalid={!preview.valid}
@@ -228,7 +235,7 @@ export function PlacementPreview() {
           stroke={r.color}
         />
         {r.seats.map((s) => (
-          <SeatGlyph key={s.id} x={x + s.x} y={y + s.y} facing={s.facing} ghost />
+          <SeatGlyph key={s.id} x={x + s.x} y={y + s.y} facing={s.facing} span={s.span} ghost />
         ))}
       </g>
     );
@@ -240,9 +247,19 @@ export function PlacementPreview() {
       {cells.map((c, i) => {
         const ok =
           !!room &&
-          canPlaceSeat(room, c.wx - room.position.x, c.wy - room.position.y) &&
+          canPlaceSeat(room, c.wx - room.position.x, c.wy - room.position.y, undefined, c) &&
           cellAt(room, c.wx - room.position.x, c.wy - room.position.y) === "floor";
-        return <SeatGlyph key={i} x={c.wx} y={c.wy} facing={c.facing} ghost invalid={!ok} />;
+        return (
+          <SeatGlyph
+            key={i}
+            x={c.wx}
+            y={c.wy}
+            facing={c.facing}
+            span={c.span}
+            ghost
+            invalid={!ok}
+          />
+        );
       })}
     </g>
   );

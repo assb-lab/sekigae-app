@@ -1,6 +1,7 @@
 /** ドメインモデルの型と zod スキーマ。docs/DESIGN.md §3 */
 import { z } from "zod";
 import { GENDERS, type Gender } from "./genders";
+import { MAX_SEAT_SPAN, seatRect } from "./geometry/seat";
 import { ROLE_KEYS, type RoleKey } from "./roles";
 import { ruleSchema, type ID, type Rule } from "./rules";
 
@@ -37,6 +38,11 @@ export interface Seat {
   facing: Facing;
   label: string;
   tags: string[];
+  /**
+   * 横長の机の幅（セル数、既定 1）。座る人から見て左右方向に伸びる（部長席など）。
+   * 北/南向きは (x, y) から右へ、東/西向きは (x, y) から下へ。domain/geometry/seat.ts
+   */
+  span?: number;
 }
 
 export interface Entrance {
@@ -134,6 +140,7 @@ export const seatSchema = z.object({
   facing,
   label: z.string(),
   tags: z.array(z.string()),
+  span: z.number().int().min(1).max(MAX_SEAT_SPAN).optional(),
 }) satisfies z.ZodType<Seat>;
 
 export const entranceSchema = z.object({
@@ -161,9 +168,14 @@ export const roomSchema = z
   .superRefine((r, ctx) => {
     if (r.cells.length !== r.width * r.height)
       ctx.addIssue({ code: "custom", message: "cells length must equal width*height" });
-    for (const s of [...r.seats, ...r.entrances])
+    for (const s of r.entrances)
       if (s.x >= r.width || s.y >= r.height)
         ctx.addIssue({ code: "custom", message: `out of bounds: ${s.id}` });
+    for (const s of r.seats) {
+      const f = seatRect(s);
+      if (f.x + f.w > r.width || f.y + f.h > r.height)
+        ctx.addIssue({ code: "custom", message: `out of bounds: ${s.id}` });
+    }
   }) satisfies z.ZodType<Room>;
 
 export const seatPlanSchema = z.object({

@@ -65,7 +65,7 @@ export function ItemsThumb({ items, className }: { items: PlacementItem[]; class
         fill="var(--canvas-floor)"
       />
       {items.map((it, i) => (
-        <SeatGlyph key={i} x={it.dx} y={it.dy} facing={it.facing} lod="mid" />
+        <SeatGlyph key={i} x={it.dx} y={it.dy} facing={it.facing} span={it.span} lod="mid" />
       ))}
     </svg>
   );
@@ -117,7 +117,7 @@ export function RoomThumb({
         <DoorGlyph key={i} {...e} />
       ))}
       {tpl.seats.map((s, i) => (
-        <SeatGlyph key={i} x={s.x} y={s.y} facing={s.facing} lod="mid" />
+        <SeatGlyph key={i} x={s.x} y={s.y} facing={s.facing} span={s.span} lod="mid" />
       ))}
     </svg>
   );

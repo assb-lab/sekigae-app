@@ -2,6 +2,7 @@
  * 奥行きヒートマップ。入口からの通路距離（roomDepth）をセルごとに色で示す。
  * 部屋・入口・席が変わると値が変わり、fill のトランジションで滑らかに再計算が見える。
  */
+import { seatCenter } from "@/domain/geometry/seat";
 import { motion } from "motion/react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
@@ -70,8 +71,9 @@ const HeatRoom = memo(function HeatRoom({
         room.seats.map((s) => {
           const sd = depth.seats.get(s.id);
           if (!sd) return null;
+          const c = seatCenter(s);
           return (
-            <g key={s.id} transform={`translate(${s.x + 0.5} ${s.y + 0.5})`}>
+            <g key={s.id} transform={`translate(${c.x} ${c.y})`}>
               <circle
                 r={0.24}
                 fill={heatColor(sd.norm)}

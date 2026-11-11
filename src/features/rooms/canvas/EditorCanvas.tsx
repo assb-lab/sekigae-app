@@ -1,4 +1,5 @@
 /** 部屋エディタのキャンバス: FloorCanvas + 部屋レイヤー + プレビュー + ツール類 */
+import { seatRect } from "@/domain/geometry/seat";
 import { Flame, Grid3x3, Hash, Map as MapIcon, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -59,12 +60,10 @@ export function EditorCanvas() {
     const seatBoxes = selection.seatIds
       .map((id) => idx.get(id))
       .filter((r) => r !== undefined)
-      .map(({ room, seat }) => ({
-        x: room.position.x + seat.x,
-        y: room.position.y + seat.y,
-        width: 1,
-        height: 1,
-      }));
+      .map(({ room, seat }) => {
+        const f = seatRect(seat);
+        return { x: room.position.x + f.x, y: room.position.y + f.y, width: f.w, height: f.h };
+      });
     if (seatBoxes.length) return unionBounds(seatBoxes);
     return unionBounds(rooms.filter((r) => selection.roomIds.includes(r.id)).map(roomBounds));
   }, [rooms, selection]);

@@ -6,6 +6,7 @@
 import type { CanvasPointerEvent } from "@/components/canvas";
 import type { ID, Room } from "@/domain/schema";
 import { seatAt } from "@/domain/geometry/room";
+import { seatRect } from "@/domain/geometry/seat";
 import { getProject, transaction, useProjectStore } from "@/store/project";
 import { useUiStore } from "@/store/ui";
 import {
@@ -362,14 +363,17 @@ export function createInteraction() {
       if (!d.moved || preview?.kind !== "rect") return;
       const room = findRoom(d.roomId);
       if (!room) return;
+      // 横長の机は一部でも矩形に入れば選択
       const ids = room.seats
-        .filter(
-          (s) =>
-            s.x >= preview.x &&
-            s.y >= preview.y &&
-            s.x < preview.x + preview.w &&
-            s.y < preview.y + preview.h,
-        )
+        .filter((s) => {
+          const f = seatRect(s);
+          return (
+            f.x < preview.x + preview.w &&
+            preview.x < f.x + f.w &&
+            f.y < preview.y + preview.h &&
+            preview.y < f.y + f.h
+          );
+        })
         .map((s) => s.id);
       if (d.additive) {
         const cur = useUiStore.getState().selection.seatIds;

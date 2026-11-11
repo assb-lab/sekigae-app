@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { confirm } from "@/components/confirm";
 import type { CellKind, Facing, ID, Room, Seat } from "@/domain/schema";
 import { MAX_ROOM_SIZE } from "@/domain/schema";
+import { seatCells, seatsOverlap, type SeatShape } from "@/domain/geometry/seat";
 import { nextPaletteColor, ROOM_PALETTE } from "@/graphics/palette";
 import i18n from "@/i18n";
 import { newId } from "@/lib/id";
@@ -250,21 +251,23 @@ export function renumberRoom(roomId: ID, order: NumberingOrder) {
 // 席・入口
 // ---------------------------------------------------------------------------
 
-/** 床セルに席を追加（自動採番・既定の向き）。追加した ID */
+/** 床セルに席を追加（自動採番・既定の向きと幅）。追加した ID */
 export function addSeatsAt(
   roomId: ID,
-  cells: (Pt & { facing?: Facing; label?: string; tags?: string[] })[],
+  cells: (Pt & { facing?: Facing; span?: number; label?: string; tags?: string[] })[],
 ): ID[] {
   const room = findRoom(roomId);
   if (!room) return [];
-  const facing = useEditor.getState().facing;
-  const occupied = new Set(room.seats.map((s) => `${s.x},${s.y}`));
-  const ok = cells.filter((c) => {
-    const k = `${c.x},${c.y}`;
-    if (occupied.has(k) || !canPlaceSeat(room, c.x, c.y)) return false;
-    occupied.add(k);
-    return true;
-  });
+  const { facing, seatSpan: span } = useEditor.getState();
+  const accepted: SeatShape[] = [];
+  const ok = cells
+    .map((c) => ({ ...c, facing: c.facing ?? facing, span: c.span ?? span }))
+    .filter((c) => {
+      if (!canPlaceSeat(room, c.x, c.y, undefined, c)) return false;
+      if (accepted.some((a) => seatsOverlap(a, c))) return false;
+      accepted.push(c);
+      return true;
+    });
   if (!ok.length) return [];
   const existing = new Set(rooms().flatMap((r) => r.seats.map((s) => s.label)));
   const fresh = nextSeatLabels(room, ok.length);
@@ -274,7 +277,8 @@ export function addSeatsAt(
     ok.map((c) => ({
       x: c.x,
       y: c.y,
-      facing: c.facing ?? facing,
+      facing: c.facing,
+      span: c.span,
       // 貼り付けたラベルが重複するなら採番し直す
       label: c.label && !existing.has(c.label) ? c.label : fresh[fi++]!,
       tags: c.tags ? [...c.tags] : [],
@@ -295,7 +299,9 @@ export function eraseCells(roomId: ID, cells: Pt[]) {
   const room = findRoom(roomId);
   if (!room) return;
   const keys = new Set(cells.map((c) => `${c.x},${c.y}`));
-  const seats = room.seats.filter((s) => keys.has(`${s.x},${s.y}`)).map((s) => s.id);
+  const seats = room.seats
+    .filter((s) => seatCells(s).some((c) => keys.has(`${c.x},${c.y}`)))
+    .map((s) => s.id);
   const ents = room.entrances.filter((e) => keys.has(`${e.x},${e.y}`)).map((e) => e.id);
   const obstacles = cells.filter(
     (c) =>
@@ -310,6 +316,34 @@ export function eraseCells(roomId: ID, cells: Pt[]) {
     if (ents.length) store().removeEntrances(roomId, ents);
     if (obstacles.length) store().paintCells(roomId, obstacles, "floor");
   });
+}
+
+/**
+ * 席の向き・幅をまとめて変える。壁・障害物・他の席にぶつかる席は変えない。
+ * 変えられなかった席があれば通知する。変更した席の数を返す
+ */
+function reshapeSeats(
+  byRoom: Map<ID, Seat[]>,
+  shapeOf: (s: Seat) => { facing: Facing; span?: number },
+): number {
+  let changed = 0;
+  let blocked = 0;
+  batch(() => {
+    for (const [roomId, seats] of byRoom)
+      for (const s of seats) {
+        // 先に変えた席も反映された最新の部屋で判定する
+        const room = findRoom(roomId)!;
+        const shape = shapeOf(s);
+        if (!canPlaceSeat(room, s.x, s.y, new Set([s.id]), shape)) {
+          blocked++;
+          continue;
+        }
+        store().updateSeats(roomId, [s.id], { facing: shape.facing, span: shape.span });
+        changed++;
+      }
+  });
+  if (blocked) toast.warning(tr()("toast.reshapeBlocked", { count: blocked }));
+  return changed;
 }
 
 /** 選択（またはホバー中）の席を回転。既定の向きも回す */
@@ -327,22 +361,17 @@ export function rotate(steps = 1) {
     if (seat) byRoom.set(room!.id, [seat]);
   }
   if (!byRoom.size) return;
-  batch(() => {
-    for (const [roomId, seats] of byRoom)
-      for (const s of seats)
-        store().updateSeats(roomId, [s.id], { facing: rotateFacing(s.facing, steps) });
-  });
+  reshapeSeats(byRoom, (s) => ({ facing: rotateFacing(s.facing, steps), span: s.span }));
 }
 
 export function setSeatsFacing(facing: Facing) {
-  batch(() => {
-    for (const [roomId, seats] of selectedSeatsByRoom())
-      store().updateSeats(
-        roomId,
-        seats.map((s) => s.id),
-        { facing },
-      );
-  });
+  reshapeSeats(selectedSeatsByRoom(), (s) => ({ facing, span: s.span }));
+}
+
+/** 選択中の席の幅（横長の机）を変える。既定の幅も変える */
+export function setSeatsSpan(span: number) {
+  useEditor.getState().setSeatSpan(span);
+  reshapeSeats(selectedSeatsByRoom(), (s) => ({ facing: s.facing, span }));
 }
 
 /** 選択中の席（無ければ部屋）を矢印キーで移動 */
@@ -500,6 +529,7 @@ export function commitPlacement(cellX: number, cellY: number, roomId: ID | undef
     x: c.wx - room.position.x,
     y: c.wy - room.position.y,
     facing: c.facing,
+    span: c.span ?? 1,
     label: p.source === "paste" ? c.label : undefined,
     tags: c.tags,
   }));

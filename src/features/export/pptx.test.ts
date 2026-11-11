@@ -99,3 +99,32 @@ describe("exportPptx", () => {
     expect(slides[2]).toContain('typeface="Arial"');
   });
 });
+
+describe("exportPptx wide desks", () => {
+  it("draws a wide desk as one shape spanning its footprint", async () => {
+    const project = makeExportFixture();
+    const room = project.layout.rooms[0]!;
+    const seat = room.seats.find((s) => room.seats.some((o) => o.x === s.x + 1 && o.y === s.y))!;
+    const right = room.seats.find((o) => o.x === seat.x + 1 && o.y === seat.y)!;
+    room.seats = room.seats.filter((o) => o.id !== right.id);
+    for (const p of project.plans) delete p.assignment[right.id];
+    seat.facing = "n";
+    seat.span = 2;
+    const opts = {
+      lang: "ja" as const,
+      columns: EXPORT_COLUMNS,
+      colorBy: "role" as const,
+      date: DATE,
+    };
+    const zip = await JSZip.loadAsync(await exportPptx(buildExportModel(project, opts)));
+    const xml = await zip.file("ppt/slides/slide3.xml")!.async("string");
+    const ext = (name: string) => {
+      const i = xml.indexOf(`name="${name}"`);
+      expect(i).toBeGreaterThan(0);
+      return Number(/<a:ext cx="(\d+)"/.exec(xml.slice(i))![1]);
+    };
+    const normal = room.seats.find((s) => s.id !== seat.id && !s.span)!;
+    // 1×2 の机は通常の席のおよそ 2 倍の幅
+    expect(ext(`seat ${seat.label}`) / ext(`seat ${normal.label}`)).toBeGreaterThan(1.8);
+  });
+});

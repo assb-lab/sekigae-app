@@ -99,6 +99,20 @@ export const DESK_CENTER: Record<Facing, { x: number; y: number }> = {
   w: { x: 0.33, y: 0.5 },
 };
 
+/** フットプリント w×h の席の机の中心（席ローカル）。1×1 では DESK_CENTER と同じ */
+export function deskCenter(facing: Facing, w = 1, h = 1): { x: number; y: number } {
+  switch (facing) {
+    case "n":
+      return { x: w / 2, y: 0.33 };
+    case "s":
+      return { x: w / 2, y: h - 0.33 };
+    case "e":
+      return { x: w - 0.33, y: h / 2 };
+    case "w":
+      return { x: 0.33, y: h / 2 };
+  }
+}
+
 /** 1 文字の概算幅（全角 = 1、半角 = 0.6） */
 const charWidth = (c: string) => ((c.codePointAt(0) ?? 0) < 0x100 ? 0.6 : 1);
 
