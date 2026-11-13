@@ -61,6 +61,9 @@ pnpm bundle:check # 初期読み込み JS の gzip サイズ予算チェック�
 `pnpm build` で生成される `dist/` は静的ファイルのみです。任意の静的 Web サーバー（学内サーバー等）に置くか、
 GitHub Actions の CI が保存する `dist` アーティファクトを利用してください。相対パスでビルドしているため、サブディレクトリにも配置できます。
 
+公開版（GitHub Pages）: <https://assb-lab.github.io/sekigae-app/>
+`main` への push ごとに `.github/workflows/pages.yml` が自動で公開します。
+
 ## ライセンス
 
 [MIT](LICENSE)

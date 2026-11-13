@@ -71,6 +71,8 @@ Further docs, in Japanese:
 
 `pnpm build` writes static files only, to `dist/`. Either serve that folder from any static web server (for example a university server), or use the `dist` artifact that GitHub Actions CI saves. Asset paths are relative, so it also works from a subdirectory.
 
+The `GitHub Pages` workflow (`.github/workflows/pages.yml`) builds `main` and publishes `dist/` to GitHub Pages. It needs one repository setting: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
 ## License
 
 [MIT](LICENSE)
